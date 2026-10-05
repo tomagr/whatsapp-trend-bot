@@ -27,7 +27,7 @@ function makeClient(headless) {
   fs.rmSync(path.join(SESSION_DIR, 'session', 'Default', 'Sessions'), { recursive: true, force: true });
   return new Client({
     authStrategy: new LocalAuth({ dataPath: SESSION_DIR }),
-    puppeteer: { headless, args: ['--no-sandbox'] },
+    puppeteer: { headless },
     // Always load the live WhatsApp Web; a cached copy of an older build conflicts with the saved session.
     webVersionCache: { type: 'none' },
     userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',

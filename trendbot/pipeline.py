@@ -120,7 +120,8 @@ def analyze(run=None, model_name="sonnet", timeout=900):
         try:
             res = subprocess.run(["claude", "-p", "--model", model_name, "--output-format", "json",
                                   "--setting-sources", "user",  # skip this project's SessionStart hook
-                                  "--disallowedTools", "Bash,Edit,Write,WebFetch,WebSearch,Agent"],
+                                  # Chat text is untrusted: no built-in tools and no MCP servers, so it can only produce text.
+                                  "--tools", "", "--strict-mcp-config"],
                                  input=prompt, capture_output=True, text=True, timeout=timeout, cwd=out)
             if res.returncode != 0:
                 raise RuntimeError(res.stderr.strip()[-500:] or "claude exited with an error")
