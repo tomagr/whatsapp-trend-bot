@@ -20,3 +20,6 @@ app/*.app/
 .superpowers/
 .DS_Store
 .cache/
+
+# Children names for the scrubber (personal data)
+privacy.local.json

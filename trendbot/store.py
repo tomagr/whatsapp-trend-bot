@@ -21,10 +21,17 @@ HOME = Path(os.environ.get("TRENDBOT_HOME", ROOT))
 STATE = HOME / "state"
 RUNS = HOME / "runs"
 CONFIG = ROOT / "groups.json"
+# Untracked {group_key: [names]} of children to scrub; kept out of git because the list itself is personal data.
+PRIVATE_NAMES = ROOT / "privacy.local.json"
 
 
 def groups():
-    return json.loads(CONFIG.read_text(encoding="utf-8"))
+    cfgs = json.loads(CONFIG.read_text(encoding="utf-8"))
+    extra = load(PRIVATE_NAMES, {})
+    for c in cfgs:
+        if extra.get(c["key"]):
+            c.setdefault("privacy", {})["extra_names"] = extra[c["key"]]
+    return cfgs
 
 
 def group_dir(key):
