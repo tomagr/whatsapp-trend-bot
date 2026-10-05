@@ -219,9 +219,17 @@ WEB = ROOT / "web"
 
 
 def sync(timeout=300):
+    """Copy the snapshots into the site's database. Always records the outcome in the run's sync.json."""
     node = shutil.which("node") or "/opt/homebrew/bin/node"
-    res = subprocess.run([node, "--import", "tsx", "scripts/sync.mts", "--state", str(STATE)],
-                         cwd=WEB, capture_output=True, text=True, timeout=timeout)
+    try:
+        res = subprocess.run([node, "--import", "tsx", "scripts/sync.mts", "--state", str(STATE)],
+                             cwd=WEB, capture_output=True, text=True, timeout=timeout)
+    except Exception as e:  # e.g. timeout: still leave a record so the summary reports the failure
+        result = {"results": [], "failed": [{"key": "*", "error": str(e)[:500]}]}
+        latest = _latest_run()
+        if latest:
+            save(latest / "sync.json", result)
+        raise RuntimeError(f"sync did not finish: {e}") from e
     print(res.stdout, end="")
     line = next((l for l in res.stdout.splitlines() if l.startswith("SYNC_JSON ")), None)
     result = (json.loads(line[len("SYNC_JSON "):]) if line
@@ -264,7 +272,9 @@ def run_summary(run=None):
             failed.append(cfg["key"])
     warning = ("No se pudo leer WhatsApp Web: corré `python3 -m trendbot login` y escaneá el QR con el celular"
                if manifest.get("wa_error") else None)
+    if site is None:  # the run ended before the sync recorded anything: the site was not updated
+        site = {"results": [], "failed": [{"key": "*", "error": "sync did not run"}]}
     return {"lines": parts, "failed": failed, "warning": warning,
-            "site": None if site is None else {"ok": not site["failed"],
+            "site": {"ok": not site["failed"],
                                                "vendors": sum(r["upserted"] for r in site["results"]),
                                                "opportunities": sum(r["opportunities"] for r in site["results"])}}

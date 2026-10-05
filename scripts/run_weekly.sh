@@ -43,10 +43,15 @@ esac
 
 # 2. Read new messages from WhatsApp Web, analyse, merge, export; then copy to the site's database.
 {
-  with_timeout 3600 $PY -m trendbot run
-  echo "== exit $?"
-  with_timeout 300 $PY -m trendbot sync
-  echo "== sync exit $?"
+  # Only sync a fresh export: if the run failed, the site keeps last week's data and the summary says it failed.
+  # The sync limit stays above Python's own 300 s timeout so that Python can record a timeout before exiting.
+  if with_timeout 3600 $PY -m trendbot run; then
+    echo "== exit 0"
+    with_timeout 360 $PY -m trendbot sync
+    echo "== sync exit $?"
+  else
+    echo "== exit $?; skipping sync"
+  fi
 } >> "$LOG" 2>&1
 
 # 3. Always tell the user how it went, even when nothing changed.
@@ -54,6 +59,8 @@ MESSAGE=$(with_timeout 60 $PY -m trendbot summary --text 2>>"$LOG")
 case $? in
   0) notify "WhatsApp Trend Bot: actualización lista" "$MESSAGE" ;;
   2) notify "WhatsApp Trend Bot: revisar" "$MESSAGE" ;;
+  3) MESSAGE="$MESSAGE. Revisá $PWD/$LOG"
+     notify "WhatsApp Trend Bot: falló" "$MESSAGE" ;;
   *) MESSAGE="No se pudo completar la actualización semanal. Revisá $PWD/$LOG"
      notify "WhatsApp Trend Bot: falló" "$MESSAGE" ;;
 esac

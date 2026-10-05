@@ -6,7 +6,7 @@
   merge         fold the latest analysis into state/
   export        write state/<key>/site.json (full snapshot per group)
   sync          copy the snapshots into the site's Postgres (web/scripts/sync.mts)
-  summary       JSON summary of the latest run (--text: notification message; exit 2 if a group failed)
+  summary       JSON summary of the latest run (--text: notification message; exit 2 if a group failed, 3 if the site was not updated)
   preflight     check that WhatsApp Web is linked (exit 3 if it needs a QR scan)
   login         open WhatsApp Web to link it (scan the QR with the phone; once)
   status        show each group's cursor
@@ -37,12 +37,12 @@ def main(argv):
             text = "Fallaron: " + ", ".join(s["failed"]) + ". " + text
         if s.get("warning"):
             text = s["warning"] + ". " + text
-        site = s.get("site")
-        text += (". Sitio sin actualizar" if site is None else
-                 f". Sitio actualizado: {site['vendors']} proveedores, {site['opportunities']} oportunidades" if site["ok"] else
-                 ". No se pudo actualizar el sitio")
+        site = s["site"]
+        text += (f". Sitio actualizado: {site['vendors']} proveedores, {site['opportunities']} oportunidades" if site["ok"]
+                 else ". No se pudo actualizar el sitio")
         print(text)
-        sys.exit(2 if s["failed"] or s.get("warning") or (site and not site["ok"]) else 0)
+        # 3 = the site was not updated (run_weekly.sh shows "falló" with the log path); 2 = some group needs a look
+        sys.exit(3 if not site["ok"] else 2 if s["failed"] or s.get("warning") else 0)
     elif cmd == "preflight":
         # Load WhatsApp Web once with the saved login. The weekly script runs this under a time limit,
         # so an unlinked session ends the run with a notification instead of hanging on a QR code.
