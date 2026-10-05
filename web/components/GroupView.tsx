@@ -9,7 +9,7 @@ import { COPY, T, type GroupKey } from "@/lib/groupCopy";
 type Vendor = ListVendor & { id: string; note: string; dates: string[]; source: string };
 type Opp = { key: string; rank: number; title: string; summary: string; offer: string; alternatives: string; gap: string;
   signals: number; people: number; firstDate: string; lastDate: string; quotes: { date?: string; who?: string; text?: string }[] };
-type Props = { userBar?: React.ReactNode; groupKey: GroupKey; lang: "es" | "en"; mode: "sentiment" | "type";
+type Props = { userBar?: React.ReactNode; signedIn: boolean; loginHref: string; groupKey: GroupKey; lang: "es" | "en"; mode: "sentiment" | "type";
   status: { checkedAt: string | null; messagesThrough: string | null }; vendors: Vendor[]; opportunities: Opp[] };
 
 const initial: AddState = { status: "idle", message: "", key: 0 };
@@ -18,7 +18,7 @@ const initial: AddState = { status: "idle", message: "", key: 0 };
 const subscribeHash = (cb: () => void) => { window.addEventListener("hashchange", cb); return () => window.removeEventListener("hashchange", cb); };
 const hashWantsOpps = () => /oportunidades|opportunities/.test(window.location.hash);
 
-export default function GroupView({ userBar, groupKey, lang, mode, status, vendors, opportunities }: Props) {
+export default function GroupView({ userBar, signedIn, loginHref, groupKey, lang, mode, status, vendors, opportunities }: Props) {
   const t = T[lang];
   const c = COPY[groupKey];
   const [tabChoice, setTab] = useState<"vendors" | "opps" | null>(null);
@@ -90,7 +90,7 @@ export default function GroupView({ userBar, groupKey, lang, mode, status, vendo
             {t.tabVendors}<span className="n">{vendors.length}</span>
           </button>
           <button type="button" className="tab" role="tab" id="tab-btn-opps" aria-controls="tab-opps" aria-selected={tab === "opps"} onClick={() => showTab("opps")}>
-            {t.tabOpps}<span className="n">{opportunities.length || ""}</span>
+            {t.tabOpps}<span className="n">{signedIn ? opportunities.length || "" : "🔒"}</span>
           </button>
         </nav>
 
@@ -103,7 +103,7 @@ export default function GroupView({ userBar, groupKey, lang, mode, status, vendo
                   <button key={val} type="button" aria-pressed={filter === val} onClick={() => setFilter(val)}>{label}</button>
                 ))}
               </div>
-              <button type="button" className="primary" onClick={() => setAddOpen((o) => !o)}>{t.add}</button>
+              {signedIn && <button type="button" className="primary" onClick={() => setAddOpen((o) => !o)}>{t.add}</button>}
             </div>
             <div className="chips" role="group" aria-label={t.chipsLabel}>
               <button type="button" className="chip" aria-pressed={cat === ""} onClick={() => setCat("")}>{t.allCats}<span className="n">{vendors.length}</span></button>
@@ -113,7 +113,7 @@ export default function GroupView({ userBar, groupKey, lang, mode, status, vendo
             </div>
           </div>
 
-          <section className="add-panel" hidden={!addOpen}>
+          {signedIn && <section className="add-panel" hidden={!addOpen}>
             <h3>{t.addTitle}</h3>
             <p>{c.addNote}</p>
             <form className="form" ref={formRef} action={addAction} autoComplete="off">
@@ -137,7 +137,7 @@ export default function GroupView({ userBar, groupKey, lang, mode, status, vendo
               </div>
             </form>
             <datalist id="cat-list">{cats.map(([name]) => <option key={name} value={name} />)}</datalist>
-          </section>
+          </section>}
 
           <main>
             {!vendors.length ? <div className="empty">{t.noVendors}</div>
@@ -165,7 +165,7 @@ export default function GroupView({ userBar, groupKey, lang, mode, status, vendo
                           <div className="side">
                             <span className={`pill ${p.cls}`}>{p.text}</span>
                             <span className="mentions"><b>{v.mentions || 1}</b>{t.mention(v.mentions || 1)}</span>
-                            {v.source === "manual" && <button type="button" className="del" onClick={() => onDelete(v.id)}>{confirmDel === v.id ? t.delSure : t.del}</button>}
+                            {signedIn && v.source === "manual" && <button type="button" className="del" onClick={() => onDelete(v.id)}>{confirmDel === v.id ? t.delSure : t.del}</button>}
                           </div>
                           {v.note && <div className="note">{v.note}</div>}
                           {(v.quote || v.dates.length > 0) && (
@@ -186,6 +186,12 @@ export default function GroupView({ userBar, groupKey, lang, mode, status, vendo
 
         <section id="tab-opps" role="tabpanel" aria-labelledby="tab-btn-opps" hidden={tab !== "opps"}>
           <div className="opps-head"><p>{t.oppsLede}</p></div>
+          {!signedIn ? (
+            <div className="opps-locked">
+              <p>{t.oppsLocked}</p>
+              <a className="signin" href={loginHref}>{t.signIn}</a>
+            </div>
+          ) : <>
           <div className="opps">
             {!opportunities.length ? <div className="empty">{t.oppsEmpty}</div> : opportunities.map((o) => (
               <article className="opp" key={o.key}>
@@ -213,6 +219,7 @@ export default function GroupView({ userBar, groupKey, lang, mode, status, vendo
             ))}
           </div>
           <p className="opps-method">{t.oppsMethod}</p>
+          </>}
         </section>
 
         <footer>{c.footer(c.chatFrom, footerThrough)}</footer>

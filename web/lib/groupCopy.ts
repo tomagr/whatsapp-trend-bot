@@ -41,6 +41,7 @@ export const T = {
     oppsMethod: "Cada oportunidad agrupa preguntas, quejas y pedidos de “¿alguien conoce…?” del chat. “Pedidos” cuenta los mensajes; “personas”, cuántos miembros distintos lo pidieron.",
     signals: "pedidos", people: "personas", gap: { open: "Sin resolver", partial: "Resuelto a medias", served: "Ya hay oferta" } as Record<string, string>,
     offer: "Qué ofrecer", alts: "Lo que hoy se usa", evidence: "Qué se dijo en el grupo", oppsEmpty: "Todavía no hay oportunidades cargadas.",
+    oppsLocked: "Las oportunidades de negocio son solo para el equipo de Amalgama.", signIn: "Ingresar con Google",
     hashVendors: "#proveedores", hashOpps: "#oportunidades",
   },
   en: {
@@ -65,6 +66,7 @@ export const T = {
     oppsMethod: "Each opportunity groups questions, complaints and “does anyone know…?” requests from the chat. “Requests” counts messages; “people” counts distinct members who raised it.",
     signals: "requests", people: "people", gap: { open: "Unmet", partial: "Partly served", served: "Already served" } as Record<string, string>,
     offer: "What to offer", alts: "What people use today", evidence: "What was said in the group", oppsEmpty: "No opportunities loaded yet.",
+    oppsLocked: "Business opportunities are only visible to the Amalgama team.", signIn: "Sign in with Google",
     hashVendors: "#vendors", hashOpps: "#opportunities",
   },
 };

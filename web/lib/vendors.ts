@@ -22,7 +22,9 @@ export async function createManualVendor(prisma: PrismaClient, raw: unknown) {
 }
 
 // Only vendors added on the site can be deleted there; pipeline vendors have no owner to approve it.
-export async function deleteManualVendor(prisma: PrismaClient, id: string) {
+export async function deleteManualVendor(prisma: PrismaClient, id: unknown) {
+  // Server actions decode arbitrary JSON: an object here would become a Prisma filter matching many rows.
+  if (typeof id !== "string" || !id || id.length > 40) return false;
   const r = await prisma.vendor.updateMany({ where: { id, source: "manual", deletedAt: null }, data: { deletedAt: new Date() } });
   return r.count === 1;
 }

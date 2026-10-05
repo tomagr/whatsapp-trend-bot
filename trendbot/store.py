@@ -27,6 +27,9 @@ PRIVATE_NAMES = ROOT / "privacy.local.json"
 
 def groups():
     cfgs = json.loads(CONFIG.read_text(encoding="utf-8"))
+    # Fail closed: without the names file the scrubber would silently publish those names.
+    if any(c.get("privacy", {}).get("scrub_child_names") for c in cfgs) and not PRIVATE_NAMES.exists():
+        raise FileNotFoundError(f"{PRIVATE_NAMES.name} is missing; copy it from the main machine before running the pipeline")
     extra = load(PRIVATE_NAMES, {})
     for c in cfgs:
         if extra.get(c["key"]):

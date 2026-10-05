@@ -56,3 +56,10 @@ test("refuses to delete a chat vendor", async () => {
   expect(await deleteManualVendor(t.prisma, v.id)).toBe(false);
   expect((await t.prisma.vendor.findUniqueOrThrow({ where: { id: v.id } })).deletedAt).toBeNull();
 });
+
+test("refuses a non-string id (a Prisma filter would match every manual vendor)", async () => {
+  await createManualVendor(t.prisma, ok);
+  await createManualVendor(t.prisma, { ...ok, name: "Otro" });
+  expect(await deleteManualVendor(t.prisma, { not: "" } as unknown as string)).toBe(false);
+  expect(await t.prisma.vendor.count({ where: { deletedAt: { not: null } } })).toBe(0);
+});

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requirePageUser } from "@/auth";
+import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { COPY, GROUP_KEYS } from "@/lib/groupCopy";
 import { fmtLong } from "@/lib/filter";
@@ -9,7 +9,7 @@ import UserBar from "@/components/UserBar";
 export const dynamic = "force-dynamic";
 
 export default async function Index() {
-  const user = await requirePageUser("/");
+  const user = (await auth())?.user;
   const rows = await db().group.findMany();
   const checked = new Map(rows.map((g) => [g.key, g.checkedAt]));
   const slugs = new Map(rows.map((g) => [g.key, g.slug]));
@@ -17,7 +17,7 @@ export default async function Index() {
   return (
     <div className="g-root g-index index">
       <div className="wrap">
-        <UserBar email={user.email} />
+        <UserBar email={user?.email} loginHref="/login" />
         <header>
           <div className="eyebrow">5 WhatsApp groups · updated every Monday</div>
           <h1>Trend <span>pages</span></h1>
@@ -36,7 +36,7 @@ export default async function Index() {
                     <span className="desc">{COPY[k].indexDesc}</span>
                     <span className="go">Open →</span>
                   </Link>
-                  {slugs.has(k) && <SlugEditor groupKey={k} slug={slugs.get(k)!} />}
+                  {user && slugs.has(k) && <SlugEditor groupKey={k} slug={slugs.get(k)!} />}
                 </div>
               ))}
             </div>

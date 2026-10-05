@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
-import { requirePageUser } from "@/auth";
+import { auth } from "@/auth";
 import GroupView from "@/components/GroupView";
 import UserBar from "@/components/UserBar";
 import { db } from "@/lib/db";
@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function GroupPage({ params }: Props) {
   const { group: slug } = await params;
-  const user = await requirePageUser(`/${slug}`);
+  const user = (await auth())?.user;
   const { group: g, redirectTo } = await resolveSlug(db(), slug);
   if (redirectTo) permanentRedirect(`/${redirectTo}`);
   if (!g || !isKey(g.key)) notFound();
@@ -30,11 +30,14 @@ export default async function GroupPage({ params }: Props) {
     db().vendor.findMany({ where: { groupKey: group, deletedAt: null },
       select: { id: true, name: true, category: true, service: true, location: true, contact: true, recommendedBy: true,
                 note: true, quote: true, mentions: true, sentiment: true, type: true, dates: true, source: true } }),
-    db().opportunity.findMany({ where: { groupKey: group }, orderBy: { rank: "asc" } }),
+    // Opportunities are private: never query them, so nothing reaches a logged-out browser.
+    user ? db().opportunity.findMany({ where: { groupKey: group }, orderBy: { rank: "asc" } }) : Promise.resolve([]),
   ]);
   return (
     <GroupView
-      userBar={<UserBar email={user.email} />}
+      userBar={<UserBar email={user?.email} loginHref={`/login?callbackUrl=${encodeURIComponent(`/${g.slug}`)}`} />}
+      signedIn={!!user}
+      loginHref={`/login?callbackUrl=${encodeURIComponent(`/${g.slug}#${g.lang === "en" ? "opportunities" : "oportunidades"}`)}`}
       groupKey={group}
       lang={g.lang === "en" ? "en" : "es"}
       mode={g.vendorMode === "type" ? "type" : "sentiment"}
