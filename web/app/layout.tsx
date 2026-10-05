@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import { Big_Shoulders, IBM_Plex_Mono, Public_Sans } from "next/font/google";
 import "./globals.css";
 import "./groups.css";
@@ -13,6 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
       <body>{children}</body>
+      <GoogleAnalytics gaId="G-ZHVFB8J6P3" />
     </html>
   );
 }

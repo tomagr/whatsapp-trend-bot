@@ -1,0 +1,50 @@
+[
+  {
+    "key": "overland",
+    "name": "Argentina Overland Trucks",
+    "lang": "es",
+    "artifact": "https://claude.ai/artifact/M8Ce1aXQF3uizDM4sRySSu",
+    "vendor_mode": "sentiment",
+    "context": "Argentine overlanders converting trucks and 4x4s into campers (mechanics, tires, camper boxes, electrical, heating, paperwork).",
+    "privacy": {"scrub_child_names": false}
+  },
+  {
+    "key": "sombreros",
+    "name": "Sombreros misteriosos",
+    "lang": "es",
+    "artifact": "https://claude.ai/artifact/MRCbPhao71eB8RVxYThEu2",
+    "vendor_mode": "sentiment",
+    "context": "Argentine parents' group for a school class in Vicente López / Munro / Florida (birthdays, gift collections, uniforms, supplies, camps, clubs, outings).",
+    "privacy": {"scrub_child_names": true}
+  },
+  {
+    "key": "members",
+    "name": "🙋Members",
+    "lang": "en",
+    "artifact": "https://claude.ai/artifact/DkwTTpNMjxmy3LR9RGEivv",
+    "vendor_mode": "type",
+    "vendor_types": ["recommendation", "self-promotion"],
+    "context": "International community of founders and professionals in fitness, wellness, longevity, wearables and health tech; intros, jobs, intro requests.",
+    "privacy": {"scrub_child_names": false}
+  },
+  {
+    "key": "briefings",
+    "name": "📈Briefings",
+    "lang": "en",
+    "artifact": "https://claude.ai/artifact/LhshCZS257pX9FNPhpttCi",
+    "vendor_mode": "type",
+    "vendor_types": ["recommendation", "self-promotion", "featured"],
+    "context": "Admin-led channel of the same fitness/health-tech community: industry news briefings (M&A, launches, funding) with member discussion.",
+    "privacy": {"scrub_child_names": false}
+  },
+  {
+    "key": "moves",
+    "name": "🏃‍♀️Moves",
+    "lang": "en",
+    "artifact": "https://claude.ai/artifact/7zC9iv2tCnXkGES2JMwmiH",
+    "vendor_mode": "type",
+    "vendor_types": ["recommendation", "self-promotion"],
+    "context": "Same fitness/health-tech community: career moves, new ventures, job openings, product launches and wearable discussions.",
+    "privacy": {"scrub_child_names": false}
+  }
+]

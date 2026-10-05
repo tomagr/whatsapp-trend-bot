@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.whatsapptrendbot.weekly</string>
+  <key>ProgramArguments</key>
+  <array>
+    <!-- Open the launcher app (not zsh directly) so macOS checks Full Disk Access against that app only. -->
+    <string>/usr/bin/open</string>
+    <string>-g</string>
+    <string>/Users/tomas/projects/whatsappTrendBot/app/WhatsApp Trend Bot.app</string>
+  </array>
+  <!-- Mondays 09:00. If the Mac is asleep then, launchd runs it on wake. -->
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Weekday</key>
+    <integer>1</integer>
+    <key>Hour</key>
+    <integer>9</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+  <!-- Keep the result window open after the job exits (launchd otherwise kills child processes). -->
+  <key>AbandonProcessGroup</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/Users/tomas/projects/whatsappTrendBot/logs/launchd.out</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/tomas/projects/whatsappTrendBot/logs/launchd.err</string>
+</dict>
+</plist>

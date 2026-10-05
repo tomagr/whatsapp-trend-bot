@@ -13,6 +13,7 @@
     "import-artifacts": "tsx scripts/import-artifacts.mts"
   },
   "dependencies": {
+    "@next/third-parties": "^16.3.8",
     "@prisma/adapter-pg": "7.10",
     "@prisma/client": "7.10",
     "dotenv": "^18.0.5",
