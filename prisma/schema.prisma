@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Group {
+  key             String        @id
+  slug            String        @unique
+  name            String
+  lang            String
+  vendorMode      String
+  checkedAt       String?
+  messagesThrough String?
+  vendors         Vendor[]
+  opportunities   Opportunity[]
+  slugAliases     GroupSlugAlias[]
+}
+
+// Slugs a group used before, so old links redirect to the current one.
+model GroupSlugAlias {
+  slug     String @id
+  groupKey String
+  group    Group  @relation(fields: [groupKey], references: [key], onDelete: Cascade)
+}
+
+model Vendor {
+  id            String    @id @default(cuid())
+  groupKey      String
+  group         Group     @relation(fields: [groupKey], references: [key])
+  slug          String?
+  name          String
+  category      String    @default("")
+  service       String    @default("")
+  location      String    @default("")
+  contact       String    @default("")
+  recommendedBy String    @default("")
+  note          String    @default("")
+  quote         String    @default("")
+  mentions      Int       @default(1)
+  sentiment     String?
+  type          String?
+  dates         String[]
+  source        String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  @@unique([groupKey, slug])
+  @@index([groupKey, deletedAt])
+}
+
+model Opportunity {
+  groupKey     String
+  group        Group  @relation(fields: [groupKey], references: [key])
+  key          String
+  rank         Int
+  title        String
+  summary      String @default("")
+  offer        String @default("")
+  alternatives String @default("")
+  gap          String @default("open")
+  signals      Int    @default(0)
+  people       Int    @default(0)
+  firstDate    String @default("")
+  lastDate     String @default("")
+  quotes       Json   @default("[]")
+
+  @@id([groupKey, key])
+}

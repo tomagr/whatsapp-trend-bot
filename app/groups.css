@@ -1,0 +1,20 @@
+/* Per-group colour tokens, copied from each artifact page (light, then dark). */
+.g-overland { --bg: #eef0ea; --surface: #fbfcf8; --ink: #1d2219; --muted: #5d6656; --line: #d4d9cc; --accent: #3f5a2a; --accent-ink: #f4f7ef; --signal: #c2620f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .g-overland { --bg: #141712; --surface: #1c2019; --ink: #e6eadf; --muted: #9aa392; --line: #2f352b; --accent: #9cc27a; --accent-ink: #141712; --signal: #f0913f; } }
+:root[data-theme="dark"] .g-overland { --bg: #141712; --surface: #1c2019; --ink: #e6eadf; --muted: #9aa392; --line: #2f352b; --accent: #9cc27a; --accent-ink: #141712; --signal: #f0913f; }
+
+.g-sombreros { --bg: #eef0f5; --surface: #fbfcfe; --ink: #1b1f2a; --muted: #5a6274; --line: #d3d8e3; --accent: #2c4f8a; --accent-ink: #f3f6fc; --signal: #d2452f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .g-sombreros { --bg: #12151c; --surface: #1a1e28; --ink: #e5e9f2; --muted: #98a0b3; --line: #2c3240; --accent: #8fb0ea; --accent-ink: #12151c; --signal: #f2826e; } }
+:root[data-theme="dark"] .g-sombreros { --bg: #12151c; --surface: #1a1e28; --ink: #e5e9f2; --muted: #98a0b3; --line: #2c3240; --accent: #8fb0ea; --accent-ink: #12151c; --signal: #f2826e; }
+
+.g-members { --bg: #eef2f1; --surface: #fbfdfc; --ink: #172221; --muted: #566563; --line: #d0dad8; --accent: #0f6b62; --accent-ink: #f0f8f6; --signal: #c2410c; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .g-members { --bg: #111817; --surface: #182120; --ink: #e2ecea; --muted: #93a5a2; --line: #2a3634; --accent: #6fd0c2; --accent-ink: #111817; --signal: #f28b52; } }
+:root[data-theme="dark"] .g-members { --bg: #111817; --surface: #182120; --ink: #e2ecea; --muted: #93a5a2; --line: #2a3634; --accent: #6fd0c2; --accent-ink: #111817; --signal: #f28b52; }
+
+.g-briefings { --bg: #eef2f1; --surface: #fbfdfc; --ink: #172221; --muted: #566563; --line: #d0dad8; --accent: #3b4fa8; --accent-ink: #f0f8f6; --signal: #c2410c; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .g-briefings { --bg: #111817; --surface: #182120; --ink: #e2ecea; --muted: #93a5a2; --line: #2a3634; --accent: #9aa8f0; --accent-ink: #111817; --signal: #f28b52; } }
+:root[data-theme="dark"] .g-briefings { --bg: #111817; --surface: #182120; --ink: #e2ecea; --muted: #93a5a2; --line: #2a3634; --accent: #9aa8f0; --accent-ink: #111817; --signal: #f28b52; }
+
+.g-moves { --bg: #eef2f1; --surface: #fbfdfc; --ink: #172221; --muted: #566563; --line: #d0dad8; --accent: #7a3e8f; --accent-ink: #f0f8f6; --signal: #c2410c; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .g-moves { --bg: #111817; --surface: #182120; --ink: #e2ecea; --muted: #93a5a2; --line: #2a3634; --accent: #d3a3e6; --accent-ink: #111817; --signal: #f28b52; } }
+:root[data-theme="dark"] .g-moves { --bg: #111817; --surface: #182120; --ink: #e2ecea; --muted: #93a5a2; --line: #2a3634; --accent: #d3a3e6; --accent-ink: #111817; --signal: #f28b52; }

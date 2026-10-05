@@ -1,0 +1,28 @@
+import type { PrismaClient } from "./generated/prisma/client";
+import { vendorInput } from "./validation";
+
+export async function createManualVendor(prisma: PrismaClient, raw: unknown) {
+  const parsed = vendorInput.safeParse(raw);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    return { ok: false as const, error: issue.message, field: String(issue.path[0] ?? "") };
+  }
+  const v = parsed.data;
+  const group = await prisma.group.findUnique({ where: { key: v.groupKey } });
+  if (!group) return { ok: false as const, error: "unknown group", field: "groupKey" };
+  await prisma.vendor.create({
+    data: {
+      groupKey: v.groupKey, source: "manual", name: v.name, category: v.category, service: v.service,
+      location: v.location, contact: v.contact, recommendedBy: v.recommendedBy, quote: v.quote,
+      sentiment: v.sentiment, type: group.vendorMode === "type" ? "recommendation" : null,
+      mentions: 1, dates: [new Date().toISOString().slice(0, 10)],
+    },
+  });
+  return { ok: true as const, name: v.name };
+}
+
+// Only vendors added on the site can be deleted there; pipeline vendors have no owner to approve it.
+export async function deleteManualVendor(prisma: PrismaClient, id: string) {
+  const r = await prisma.vendor.updateMany({ where: { id, source: "manual", deletedAt: null }, data: { deletedAt: new Date() } });
+  return r.count === 1;
+}

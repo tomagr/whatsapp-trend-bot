@@ -1,69 +1,51 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import Link from "next/link";
+import { requirePageUser } from "@/auth";
+import { db } from "@/lib/db";
+import { COPY, GROUP_KEYS } from "@/lib/groupCopy";
+import { fmtLong } from "@/lib/filter";
+import SlugEditor from "@/components/SlugEditor";
+import UserBar from "@/components/UserBar";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Index() {
+  const user = await requirePageUser("/");
+  const rows = await db().group.findMany();
+  const checked = new Map(rows.map((g) => [g.key, g.checkedAt]));
+  const slugs = new Map(rows.map((g) => [g.key, g.slug]));
+  const sections = ["Communities", "Fitness & health tech"] as const;
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="g-root g-index index">
+      <div className="wrap">
+        <UserBar email={user.email} />
+        <header>
+          <div className="eyebrow">5 WhatsApp groups · updated every Monday</div>
+          <h1>Trend <span>pages</span></h1>
+          <p className="lede">Each page lists the vendors people recommended in a group and the business opportunities behind what members keep asking for.</p>
+        </header>
+        {sections.map((s) => (
+          <section key={s}>
+            <h2>{s}</h2>
+            <div className="list">
+              {GROUP_KEYS.filter((k) => COPY[k].community === s).map((k) => (
+                <div key={k} className="row-wrap">
+                  <Link className="page" style={{ ["--c" as string]: `var(--g-${k})` }} href={`/${slugs.get(k) ?? k}`}>
+                    <span className="swatch" aria-hidden="true" />
+                    <span className="name">{COPY[k].eyebrowName}</span>
+                    <span className="meta">{COPY[k].indexMeta}{checked.get(k) ? ` · checked ${fmtLong(checked.get(k), "en-GB")}` : ""}</span>
+                    <span className="desc">{COPY[k].indexDesc}</span>
+                    <span className="go">Open →</span>
+                  </Link>
+                  {slugs.has(k) && <SlugEditor groupKey={k} slug={slugs.get(k)!} />}
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+        <footer>
+          Each page has two tabs: <b>vendors</b> and <b>business opportunities</b>. New messages are analysed every Monday and show up here automatically.
+        </footer>
+      </div>
     </div>
   );
 }
