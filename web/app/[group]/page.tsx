@@ -41,7 +41,8 @@ export default async function GroupPage({ params }: Props) {
       lang={g.lang === "en" ? "en" : "es"}
       mode={g.vendorMode === "type" ? "type" : "sentiment"}
       status={{ checkedAt: g.checkedAt, messagesThrough: g.messagesThrough }}
-      vendors={vendors}
+      // Who recommended a vendor is a group member's name: blank it server-side so it never reaches a logged-out browser.
+      vendors={user ? vendors : vendors.map((v) => ({ ...v, recommendedBy: "" }))}
       opportunities={opportunities.map((o) => ({ ...o, quotes: (o.quotes as { date?: string; who?: string; text?: string }[]) ?? [] }))}
     />
   );
