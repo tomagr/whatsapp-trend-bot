@@ -1,15 +1,11 @@
 import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import NavBar from "@/components/NavBar";
-import GroupUpdateButton from "@/components/GroupUpdateButton";
-import SlugEditor from "@/components/SlugEditor";
+import AdminGroupRow from "@/components/AdminGroupRow";
 import UpdatePanel from "@/components/UpdatePanel";
 import { db } from "@/lib/db";
 import { groupPhotoUrl } from "@/lib/groupPhoto";
-import { fmtLong } from "@/lib/filter";
 import { copyFor } from "@/lib/groupCopy";
 import { chatsToOffer, orderedGroups } from "@/lib/groups";
 import { rowStyle } from "@/lib/groupStyle";
@@ -17,7 +13,7 @@ import { stripEmoji } from "@/lib/ogImage";
 import { activeRun, recentRuns } from "@/lib/updateRuns";
 import { isSuperadmin, listUsers } from "@/lib/users";
 import AddGroupPanel from "@/components/AddGroupPanel";
-import { GroupRemoveButton, GroupRestoreButton } from "@/components/GroupRemoveButton";
+import { GroupRestoreButton } from "@/components/GroupRemoveButton";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Admin · WhatsApp Trend Pages", robots: { index: false, follow: false } };
@@ -26,6 +22,12 @@ export const metadata: Metadata = { title: "Admin · WhatsApp Trend Pages", robo
 const fmt = (d: Date | string | null) => !d ? "—" : new Intl.DateTimeFormat("en-GB", {
   timeZone: "America/Argentina/Buenos_Aires", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
 }).format(new Date(d));
+
+// "2026-10-06" -> "6 Oct"; the year only when it is not this year's.
+const shortDate = (d: string) => {
+  const [y, m, day] = d.split("-").map(Number);
+  return new Date(y, m - 1, day).toLocaleDateString("en-GB", { day: "numeric", month: "short", ...(y === new Date().getFullYear() ? {} : { year: "numeric" }) });
+};
 
 export default async function Admin() {
   const user = (await auth())?.user;
@@ -92,24 +94,14 @@ export default async function Admin() {
             <AddGroupPanel offer={offer && { fetchedAt: offer.fetchedAt.toISOString(), chats: offer.chats }} pending={chatPending}
               failed={chatRun?.status === "failed" ? chatRun.message : null} />
           </div>
-          <div className="list">
-            {groups.map((g) => {
-              const k = g.key;
-              return (
-                <div key={k} className="admin-group">
-                  <Link className={`page${g.addedAt ? " custom" : ""}`} style={rowStyle(g)} href={`/${g.slug}`}>
-                    {g.photoHash ? <Image className="swatch photo" src={groupPhotoUrl(g.slug, g.photoHash)!} alt="" width={28} height={28} unoptimized /> : <span className="swatch" aria-hidden="true" />}
-                    <span className="name">{groupName(k)}</span>
-                    <span className="meta">{vendorCount.get(k) ?? 0} vendors · checked {g.checkedAt ? fmtLong(g.checkedAt, "en-GB") : g.addedAt ? "not yet (first update pending)" : "—"} · messages through {g.messagesThrough ?? "—"}</span>
-                    <span className="go">Open →</span>
-                  </Link>
-                  <GroupUpdateButton groupKey={k} name={groupName(k)} disabled={!!active} />
-                  <SlugEditor groupKey={k} slug={g.slug} />
-                  <GroupRemoveButton groupKey={k} name={groupName(k)} />
-                </div>
-              );
-            })}
-          </div>
+          <ul className="grp-list">
+            {groups.map((g) => (
+              <AdminGroupRow key={g.key} groupKey={g.key} slug={g.slug} name={groupName(g.key)} style={rowStyle(g)} custom={!!g.addedAt}
+                photoUrl={g.photoHash ? groupPhotoUrl(g.slug, g.photoHash)! : null} vendors={vendorCount.get(g.key) ?? 0}
+                checked={g.checkedAt ? shortDate(g.checkedAt) : null} latest={g.messagesThrough ? shortDate(g.messagesThrough) : null}
+                updateDisabled={!!active} />
+            ))}
+          </ul>
           {removed.length > 0 && (
             <details className="removed-groups">
               <summary>Removed groups ({removed.length})</summary>

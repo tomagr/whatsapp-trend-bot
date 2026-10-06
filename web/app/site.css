@@ -34,6 +34,52 @@
 .index .run:last-child { border-bottom: 0; }
 .run-status { font-family: var(--font-body); font-weight: 700; letter-spacing: .03em; }
 
+/* Admin group list: one panel, a row per group; Edit URL and Remove live behind the ⋯ menu */
+.grp-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); }
+.grp { border-bottom: 1px solid var(--line); }
+.grp:last-child { border-bottom: 0; }
+.grp.custom { --c: var(--c-l); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .grp.custom { --c: var(--c-d); } }
+:root[data-theme="dark"] .grp.custom { --c: var(--c-d); }
+.grp-main { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 14px 16px 14px 18px; }
+.grp-photo { display: block; width: 40px; height: 40px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--c); }
+.grp-photo-empty { display: grid; place-items: center; background: color-mix(in srgb, var(--c) 18%, var(--surface)); color: var(--c); font-family: var(--font-display); font-weight: 800; font-size: 17px; }
+.grp-text { display: grid; gap: 3px; min-width: 0; }
+.grp-name { justify-self: start; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-display); font-weight: 800; font-size: 18px; letter-spacing: -.015em; color: var(--ink); text-decoration: none; }
+.grp-name:hover { color: var(--c); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.grp-name:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; border-radius: 4px; }
+.grp-meta { display: flex; flex-wrap: wrap; gap: 2px 16px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.grp-meta span:first-child { color: var(--ink); font-weight: 600; }
+.grp-actions { display: flex; align-items: center; gap: 6px; }
+.grp-actions .group-update { padding: 0; }
+.grp-more { position: relative; }
+.grp-more-btn { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 1px solid transparent; border-radius: 50%; background: none; color: var(--muted); }
+.grp-more-btn svg { fill: currentColor; }
+.grp-more-btn:hover, .grp-more-btn[aria-expanded="true"] { border-color: var(--line); color: var(--ink); background: var(--bg); }
+.grp-more-btn:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+.grp-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; min-width: 180px; display: grid; gap: 2px; padding: 6px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: 0 10px 30px rgb(0 0 0 / .18); }
+.grp-menu a, .grp-menu button { display: block; width: 100%; padding: 9px 10px; border: 0; border-radius: 8px; background: none; color: var(--ink); font: inherit; font-size: 14px; text-align: left; text-decoration: none; min-height: 0; }
+.grp-menu a:hover, .grp-menu button:hover { background: var(--bg); }
+.grp-menu a:focus-visible, .grp-menu button:focus-visible { outline: 2px solid var(--signal); outline-offset: -2px; }
+.grp-menu .danger-text { color: var(--neg); }
+.grp-panel { margin: 0 16px 14px 72px; padding: 14px 16px; border-radius: 12px; background: var(--bg); font-size: 14px; }
+.grp-panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+.grp-panel form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; }
+.grp-panel label { display: flex; align-items: center; gap: 4px; flex: 0 1 280px; min-width: 0; font-family: var(--font-mono); }
+.grp-panel input { padding: 7px 10px; font-family: var(--font-mono); font-size: 13px; }
+.grp-panel form button { min-height: 36px; padding: 0 14px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+.grp-panel .slug-msg { flex-basis: 100%; margin: 0; color: var(--muted); font-size: 13px; }
+.grp-panel .slug-msg.error { color: var(--signal); }
+.grp-panel .group-remove { padding: 0; margin: 0; font-size: 14px; }
+.grp-panel .group-remove button { border-radius: 999px; min-height: 36px; padding: 0 14px; }
+
+@media (max-width: 640px) {
+  .grp-main { grid-template-columns: auto minmax(0, 1fr); padding: 14px 14px 12px; gap: 10px 12px; }
+  .grp-actions { grid-column: 2; justify-content: flex-start; margin-left: -2px; }
+  .grp-name { white-space: normal; }
+  .grp-panel { margin: 0 14px 14px; }
+}
+
 @media (max-width: 640px) {
   .index .row-wrap a.page, .index .admin-group a.page { padding: 16px; }
   .index .slug-edit { padding: 0 16px 14px 46px; }
