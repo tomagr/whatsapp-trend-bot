@@ -35,7 +35,7 @@ export default async function GroupPage({ params }: Props) {
   ]);
   return (
     <GroupView
-      userBar={<UserBar email={user?.email} />}
+      userBar={<UserBar email={user?.email} signOutTo={`/${g.slug}`} />}
       signedIn={!!user}
       groupKey={group}
       lang={g.lang === "en" ? "en" : "es"}
