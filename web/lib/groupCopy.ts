@@ -23,7 +23,7 @@ export const T = {
   es: {
     locale: "es-AR", eyebrow: "Grupo de WhatsApp · ", vendors: "proveedores", cats: "rubros",
     chat: ["chat del ", " al "] as const, updated: "Actualizado",
-    tabVendors: "Proveedores", tabOpps: "Oportunidades de negocio", tabsLabel: "Proveedores / Oportunidades de negocio",
+    tabVendors: "Proveedores", tabOpps: "Oportunidades", tabsLabel: "Proveedores / Oportunidades de negocio",
     searchLabel: "Buscar proveedores", filterLabel: "Filtrar por opinión", all: "Todas", add: "+ Sumar proveedor",
     chipsLabel: "Filtrar por rubro", allCats: "Todos los rubros", addTitle: "Sumar proveedor",
     f: { name: "Nombre *", cat: "Rubro *", service: "Qué hace / para qué lo recomendás *", loc: "Ubicación", locPh: "Ciudad, provincia",
@@ -43,11 +43,16 @@ export const T = {
     offer: "Qué ofrecer", alts: "Lo que hoy se usa", evidence: "Qué se dijo en el grupo", oppsEmpty: "Todavía no hay oportunidades cargadas.",
     oppsLocked: "Las oportunidades de negocio son solo para el equipo de Amalgama.", signIn: "Ingresar con Google",
     hashVendors: "#proveedores", hashOpps: "#oportunidades",
+    filters: "Filtros", clear: "Limpiar", close: "Cerrar", by: "por", call: "Llamar",
+    results: (n: number) => (n === 1 ? "1 resultado" : `${n} resultados`),
+    show: (n: number) => (n === 1 ? "Ver 1 proveedor" : `Ver ${n} proveedores`),
+    copy: "Copiar contacto", copied: "Copiado", askGroup: "El contacto se compartió en el grupo: pedilo ahí.",
+    opinion: "Opinión", saidBy: "Lo dijo",
   },
   en: {
     locale: "en-GB", eyebrow: "WhatsApp group · ", vendors: "vendors", cats: "categories",
     chat: ["chat from ", " to "] as const, updated: "Updated",
-    tabVendors: "Vendors", tabOpps: "Business opportunities", tabsLabel: "Vendors / Business opportunities",
+    tabVendors: "Vendors", tabOpps: "Opportunities", tabsLabel: "Vendors / Business opportunities",
     searchLabel: "Search vendors", filterLabel: "Filter by source", all: "All", add: "+ Add vendor",
     chipsLabel: "Filter by category", allCats: "All categories", addTitle: "Add vendor",
     f: { name: "Name *", cat: "Category *", service: "What they do / why you recommend them *", loc: "Location", locPh: "City, country",
@@ -68,6 +73,11 @@ export const T = {
     offer: "What to offer", alts: "What people use today", evidence: "What was said in the group", oppsEmpty: "No opportunities loaded yet.",
     oppsLocked: "Business opportunities are only visible to the Amalgama team.", signIn: "Sign in with Google",
     hashVendors: "#vendors", hashOpps: "#opportunities",
+    filters: "Filters", clear: "Clear", close: "Close", by: "by", call: "Call",
+    results: (n: number) => (n === 1 ? "1 result" : `${n} results`),
+    show: (n: number) => (n === 1 ? "Show 1 vendor" : `Show ${n} vendors`),
+    copy: "Copy contact", copied: "Copied", askGroup: "The contact was shared in the group: ask for it there.",
+    opinion: "Source", saidBy: "Said by",
   },
 };
 
