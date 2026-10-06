@@ -102,14 +102,21 @@ def fetch(requests, timeout=1800):
     """requests: [(group_name, since_unix_ts)]. One WhatsApp Web session for all groups.
 
     Returns {group_name: (chat, messages)} or {group_name: Exception} for groups that could not be read.
+    chat["photo"] is the group picture ({mime, data} in base64, or None when the group has none);
+    the key is missing when the picture could not be read.
     """
     res = _run("export", {"groups": [{"name": n, "since": int(s or 0)} for n, s in requests]}, timeout=timeout)
     if res.returncode != 0:
         raise RuntimeError(res.stderr.strip()[-500:] or res.stdout.strip() or "WhatsApp Web export failed")
     out = {}
     for name, g in json.loads(res.stdout)["groups"].items():
-        out[name] = (RuntimeError(g["error"]) if "error" in g
-                     else (g["chat"], [_to_message(r) for r in g["messages"]]))
+        if "error" in g:
+            out[name] = RuntimeError(g["error"])
+            continue
+        chat = dict(g["chat"])
+        if "photo" in g:  # JSON drops undefined, so a picture that could not be read never reaches here
+            chat["photo"] = g["photo"]
+        out[name] = (chat, [_to_message(r) for r in g["messages"]])
     return out
 
 

@@ -41,6 +41,16 @@ def _latest_run():
 KEEP_RUNS = 4
 
 
+def _save_photo(gdir, chat):
+    """Keep the group picture WhatsApp Web returned; leave the stored one when it could not be read."""
+    if "photo" not in chat:
+        return
+    if chat["photo"]:
+        save(gdir / "photo.json", {"mime": chat["photo"]["mime"], "data": chat["photo"]["data"]})
+    else:  # the group has no picture (any more)
+        (gdir / "photo.json").unlink(missing_ok=True)
+
+
 def prepare():
     for old in sorted(p for p in RUNS.glob("*") if p.is_dir())[:-(KEEP_RUNS - 1) or None]:
         shutil.rmtree(old, ignore_errors=True)  # runs only hold model I/O; state/ is the record
@@ -58,6 +68,7 @@ def prepare():
         if isinstance(result, Exception):
             manifest["groups"][key] = {"status": "fetch-failed", "error": str(result)[:500]}
             continue
+        _save_photo(gdir, result[0])  # also when there are no new messages
         since = _cursor_epoch(cursor)
         msgs = [m for m in result[1] if _is_new(m, cursor, since)]
         if not msgs:
@@ -204,7 +215,8 @@ def export():
         meta = docs.pop("meta/status", None) or {}
         snap = {
             "group": {"key": cfg["key"], "name": cfg["name"], "lang": cfg["lang"], "vendorMode": cfg["vendor_mode"],
-                      "checkedAt": meta.get("checkedAt"), "messagesThrough": meta.get("messagesThrough")},
+                      "checkedAt": meta.get("checkedAt"), "messagesThrough": meta.get("messagesThrough"),
+                      "photo": load(group_dir(cfg["key"]) / "photo.json", None)},
             "vendors": {p.split("/", 1)[1]: d for p, d in docs.items() if p.startswith("vendors/")},
             "opportunities": {p.split("/", 1)[1]: d for p, d in docs.items() if p.startswith("opportunities/")},
         }

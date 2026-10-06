@@ -6,6 +6,7 @@ state/<key>/
   vendors.json        {id: {"doc": <published vendor doc>, "aliases": [names]}}
   signals.json        [compact demand signals, each with the opportunity key it belongs to]
   opportunities.json  {key: cluster definition (title, summary, offer, alternatives, gap?)}
+  photo.json          {"mime", "data" (base64)}: the group's WhatsApp picture, refreshed on every run
   site.json           full snapshot for the site (written by `export`, read by web/scripts/sync.mts)
 runs/<run_id>/        transient inputs/outputs of one weekly run (raw message text is deleted after merge)
 """

@@ -2,9 +2,10 @@
 //
 //   node export.mjs login    opens a visible WhatsApp Web window; scan the QR with the phone once
 //   node export.mjs check    exit 0 when the saved login works, 3 when WhatsApp Web needs a QR scan
-//   node export.mjs export   stdin {"groups": [{"name", "since"}]} -> stdout {"groups": {name: {chat, messages} | {error}}}
+//   node export.mjs export   stdin {"groups": [{"name", "since"}]} -> stdout {"groups": {name: {chat, messages, photo?} | {error}}}
 //
 // `since` is a unix timestamp; messages at or after it are returned. Progress goes to stderr.
+// `photo` is the group picture as {mime, data (base64)}, null when the group has none, and absent when it could not be read.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -18,6 +19,8 @@ const SESSION_DIR = path.join(ROOT, '.wa-session');
 const READY_TIMEOUT_MS = 180_000;
 const SETTLE_MS = 20_000; // let messages received while offline arrive before reading
 const LOGIN_TIMEOUT_MS = 600_000;
+const PHOTO_TIMEOUT_MS = 30_000;
+const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 
 const log = (...a) => console.error('[wa]', ...a);
 
@@ -137,6 +140,23 @@ async function readChat(chatId, since) {
   }) };
 }
 
+// The group picture's full-size URL comes from WhatsApp's servers and expires, so download it right away.
+// Returns undefined (not null) when it could not be read, so the pipeline keeps last week's picture.
+async function groupPhoto(client, chatId) {
+  try {
+    const url = await client.getProfilePicUrl(chatId);
+    if (!url) return null;
+    const res = await fetch(url, { signal: AbortSignal.timeout(PHOTO_TIMEOUT_MS) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (!buf.length || buf.length > MAX_PHOTO_BYTES) throw new Error(`unexpected size ${buf.length}`);
+    return { mime: res.headers.get('content-type') || 'image/jpeg', data: buf.toString('base64') };
+  } catch (e) {
+    log(`group photo not read: ${String(e?.message || e).slice(0, 200)}`);
+    return undefined;
+  }
+}
+
 async function readStdin() {
   let s = '';
   for await (const chunk of process.stdin) s += chunk;
@@ -173,6 +193,7 @@ async function main() {
           out.groups[name] = {
             chat,
             messages,
+            photo: await groupPhoto(client, chat.id),
           };
           log(`${chat.name}: ${messages.length} new of ${stats.loaded} loaded (${stats.initial} in memory, ${stats.pages} pages, ${stats.range?.join(' → ') || 'none'})`);
         } catch (e) {

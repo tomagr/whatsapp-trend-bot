@@ -87,3 +87,34 @@ test("runSync continues past a broken group", async () => {
   expect(out.results.map((r) => r.key)).toEqual(["overland"]);
   expect(out.failed.map((f) => f.key)).toEqual(["moves"]);
 });
+
+const JPEG = { mime: "image/jpeg", data: Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]).toString("base64") };
+const withPhoto = (photo: Snapshot["group"]["photo"]) => snap({ group: { ...snap().group, photo } });
+const storedPhoto = () => t.prisma.groupPhoto.findUnique({ where: { groupKey: "overland" } });
+
+test("stores the group photo and replaces it when it changes", async () => {
+  await syncGroup(t.prisma, withPhoto(JPEG));
+  const first = await storedPhoto();
+  expect(first).toMatchObject({ mime: "image/jpeg" });
+  expect(Buffer.from(first!.data).toString("base64")).toBe(JPEG.data);
+  const png = { mime: "image/png", data: Buffer.from([0x89, 0x50, 0x4e, 0x47]).toString("base64") };
+  await syncGroup(t.prisma, withPhoto(png));
+  const second = await storedPhoto();
+  expect(second?.mime).toBe("image/png");
+  expect(second?.hash).not.toBe(first?.hash);
+});
+
+test("keeps the photo when the snapshot does not say, removes it when the group has none", async () => {
+  await syncGroup(t.prisma, withPhoto(JPEG));
+  await syncGroup(t.prisma, snap());
+  expect(await storedPhoto()).not.toBeNull();
+  await syncGroup(t.prisma, withPhoto(null));
+  expect(await storedPhoto()).toBeNull();
+});
+
+test("ignores a photo that is not a plain image but still syncs the group", async () => {
+  await syncGroup(t.prisma, withPhoto(JPEG));
+  const r = await syncGroup(t.prisma, withPhoto({ mime: "text/html", data: Buffer.from("<script>").toString("base64") }));
+  expect(r.upserted).toBe(1);
+  expect((await storedPhoto())?.mime).toBe("image/jpeg");
+});

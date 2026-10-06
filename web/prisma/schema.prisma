@@ -18,6 +18,7 @@ model Group {
   vendors         Vendor[]
   opportunities   Opportunity[]
   slugAliases     GroupSlugAlias[]
+  photo           GroupPhoto?
 }
 
 // Slugs a group used before, so old links redirect to the current one.
@@ -25,6 +26,16 @@ model GroupSlugAlias {
   slug     String @id
   groupKey String
   group    Group  @relation(fields: [groupKey], references: [key], onDelete: Cascade)
+}
+
+// The WhatsApp group's picture, refreshed by the weekly job. Kept apart from Group so group queries never load the bytes.
+model GroupPhoto {
+  groupKey  String   @id
+  group     Group    @relation(fields: [groupKey], references: [key], onDelete: Cascade)
+  data      Bytes
+  mime      String
+  hash      String
+  updatedAt DateTime @updatedAt
 }
 
 model Vendor {

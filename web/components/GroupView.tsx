@@ -9,7 +9,7 @@ import { COPY, T, type GroupKey } from "@/lib/groupCopy";
 
 type Opp = { key: string; rank: number; title: string; summary: string; offer: string; alternatives: string; gap: string;
   signals: number; people: number; firstDate: string; lastDate: string; quotes: { date?: string; who?: string; text?: string }[] };
-type Props = { userBar?: React.ReactNode; signedIn: boolean; groupKey: GroupKey; lang: "es" | "en"; mode: "sentiment" | "type";
+type Props = { userBar?: React.ReactNode; signedIn: boolean; photoUrl?: string; groupKey: GroupKey; lang: "es" | "en"; mode: "sentiment" | "type";
   status: { checkedAt: string | null; messagesThrough: string | null }; vendors: Vendor[]; opportunities: Opp[] };
 
 
@@ -17,7 +17,7 @@ type Props = { userBar?: React.ReactNode; signedIn: boolean; groupKey: GroupKey;
 const subscribeHash = (cb: () => void) => { window.addEventListener("hashchange", cb); return () => window.removeEventListener("hashchange", cb); };
 const hashWantsOpps = () => /oportunidades|opportunities/.test(window.location.hash);
 
-export default function GroupView({ userBar, signedIn, groupKey, lang, mode, status, vendors, opportunities }: Props) {
+export default function GroupView({ userBar, signedIn, photoUrl, groupKey, lang, mode, status, vendors, opportunities }: Props) {
   const t = T[lang];
   const c = COPY[groupKey];
   const [tabChoice, setTab] = useState<"vendors" | "opps" | null>(null);
@@ -70,7 +70,9 @@ export default function GroupView({ userBar, signedIn, groupKey, lang, mode, sta
     <div className={`g-root g-${groupKey}`} lang={lang}>
       <div className="wrap">
         {userBar}
-        <header className="top">
+        <header className={`top${photoUrl ? " has-photo" : ""}`}>
+          {/* eslint-disable-next-line @next/next/no-img-element -- served by our own route, already sized by WhatsApp */}
+          {photoUrl && <img className="gphoto" src={photoUrl} alt="" width={72} height={72} />}
           <div className="eyebrow">{t.eyebrow}{c.eyebrowName}</div>
           <h1>{c.h1[0]}<span>{c.h1[1]}</span></h1>
           <p className="lede">{c.lede}</p>

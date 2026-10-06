@@ -26,6 +26,7 @@ body { margin: 0; }
 .wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; }
 
 header.top { display: grid; gap: 10px; padding-bottom: 20px; border-bottom: 3px solid var(--ink); }
+header.top .gphoto { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 2px solid var(--ink); background: var(--bg); }
 .eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(40px, 7vw, 68px); line-height: .92; margin: 0; letter-spacing: .01em; text-transform: uppercase; text-wrap: balance; }
 h1 span { color: var(--signal); }
@@ -233,6 +234,7 @@ dialog.sheet::backdrop { background: rgb(0 0 0 / .45); }
   header.top { gap: 6px; padding-bottom: 12px; border-bottom-width: 2px; }
   header.top h1 { font-size: 36px; }
   header.top .lede { display: none; }
+  header.top .gphoto { width: 52px; height: 52px; }
   .stats { font-size: 12px; gap: 4px 12px; }
   .tabs { margin-top: 8px; }
   .tab { font-size: 17px; padding: 10px 10px; }

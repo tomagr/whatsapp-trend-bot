@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import type { PrismaClient } from "./generated/prisma/client";
@@ -5,6 +6,8 @@ import type { PrismaClient } from "./generated/prisma/client";
 export type GroupInfo = {
   key: string; name: string; lang: string; vendorMode: string;
   checkedAt: string | null; messagesThrough: string | null;
+  // Group picture as exported by the pipeline: null = the group has none, absent = unknown (leave the stored one).
+  photo?: { mime: string; data: string } | null;
 };
 export type VendorDoc = {
   name: string; category?: string; service?: string; location?: string; contact?: string;
@@ -23,6 +26,9 @@ type Tx = Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction"
 
 const SENTIMENTS = new Set(["positive", "mixed", "negative"]);
 const TYPES = new Set(["recommendation", "self-promotion", "featured"]);
+// Served back with this content type, so only accept plain raster images.
+const PHOTO_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 
 function vendorFields(d: VendorDoc) {
   return {
@@ -44,6 +50,17 @@ function vendorFields(d: VendorDoc) {
 export async function upsertGroup(tx: Tx, g: GroupInfo) {
   const data = { name: g.name, lang: g.lang, vendorMode: g.vendorMode, checkedAt: g.checkedAt, messagesThrough: g.messagesThrough };
   await tx.group.upsert({ where: { key: g.key }, create: { key: g.key, slug: g.key, ...data }, update: data });
+  if (g.photo === undefined) return;
+  if (g.photo === null) { await tx.groupPhoto.deleteMany({ where: { groupKey: g.key } }); return; }
+  const mime = g.photo.mime.split(";")[0].trim().toLowerCase();
+  const bytes = Buffer.from(g.photo.data, "base64");
+  // A bad picture must not block the group's vendors: keep the stored one and say why.
+  if (!PHOTO_MIMES.has(mime) || !bytes.length || bytes.length > MAX_PHOTO_BYTES) {
+    console.warn(`${g.key}: ignoring group photo (${mime}, ${bytes.length} bytes)`);
+    return;
+  }
+  const photo = { data: bytes, mime, hash: createHash("sha1").update(bytes).digest("hex").slice(0, 12) };
+  await tx.groupPhoto.upsert({ where: { groupKey: g.key }, create: { groupKey: g.key, ...photo }, update: photo });
 }
 
 // Copies one group's full snapshot into the database. Manual vendors and site deletions always win.

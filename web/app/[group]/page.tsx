@@ -26,17 +26,20 @@ export default async function GroupPage({ params }: Props) {
   if (redirectTo) permanentRedirect(`/${redirectTo}`);
   if (!g || !isKey(g.key)) notFound();
   const group = g.key;
-  const [vendors, opportunities] = await Promise.all([
+  const [vendors, opportunities, photo] = await Promise.all([
     db().vendor.findMany({ where: { groupKey: group, deletedAt: null },
       select: { id: true, name: true, category: true, service: true, location: true, contact: true, recommendedBy: true,
                 note: true, quote: true, mentions: true, sentiment: true, type: true, dates: true, source: true } }),
     // Opportunities are private: never query them, so nothing reaches a logged-out browser.
     user ? db().opportunity.findMany({ where: { groupKey: group }, orderBy: { rank: "asc" } }) : Promise.resolve([]),
+    // The picture itself is served by ./photo (signed-in only); the hash busts the browser cache when it changes.
+    user ? db().groupPhoto.findUnique({ where: { groupKey: group }, select: { hash: true } }) : Promise.resolve(null),
   ]);
   return (
     <GroupView
       userBar={<UserBar email={user?.email} signOutTo={`/${g.slug}`} />}
       signedIn={!!user}
+      photoUrl={photo ? `/${g.slug}/photo?v=${photo.hash}` : undefined}
       groupKey={group}
       lang={g.lang === "en" ? "en" : "es"}
       mode={g.vendorMode === "type" ? "type" : "sentiment"}
