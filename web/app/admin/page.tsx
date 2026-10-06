@@ -15,6 +15,7 @@ import { chatsToOffer, orderedGroups } from "@/lib/groups";
 import { rowStyle } from "@/lib/groupStyle";
 import { stripEmoji } from "@/lib/ogImage";
 import { activeRun, recentRuns } from "@/lib/updateRuns";
+import { isSuperadmin, listUsers } from "@/lib/users";
 import AddGroupPanel from "@/components/AddGroupPanel";
 import { GroupRemoveButton, GroupRestoreButton } from "@/components/GroupRemoveButton";
 
@@ -30,9 +31,11 @@ export default async function Admin() {
   const user = (await auth())?.user;
   if (!user) redirect("/login");
   const prisma = db();
-  const [active, runs, groups, counts, offer, chatRun, removed] = await Promise.all([
+  const superadmin = await isSuperadmin(prisma, user.email);
+  const [active, runs, users, groups, counts, offer, chatRun, removed] = await Promise.all([
     activeRun(prisma),
-    recentRuns(prisma, 50),
+    superadmin ? recentRuns(prisma, 50) : [],
+    superadmin ? listUsers(prisma) : [],
     orderedGroups(prisma),
     prisma.vendor.groupBy({ by: ["groupKey"], where: { deletedAt: null }, _count: true }),
     chatsToOffer(prisma),
@@ -68,7 +71,7 @@ export default async function Admin() {
             requestedAt: fmt(active.requestedAt), startedAt: active.startedAt ? fmt(active.startedAt) : null, scope: scope(active) }} />
         </section>
 
-        <section>
+        {superadmin && <section>
           <h2>Recent runs</h2>
           {!runs.length ? <p className="muted">No runs requested from here yet.</p> : (
             <>
@@ -81,7 +84,7 @@ export default async function Admin() {
               )}
             </>
           )}
-        </section>
+        </section>}
 
         <section>
           <div className="groups-head">
@@ -122,6 +125,24 @@ export default async function Admin() {
             </details>
           )}
         </section>
+
+        {superadmin && (
+          <section>
+            <h2>Users</h2>
+            {!users.length ? <p className="muted">Nobody has signed in yet.</p> : (
+              <ul className="runs users">
+                {users.map((u) => (
+                  <li key={u.email} className="run">
+                    <span className="run-status">{u.superadmin ? "superadmin" : "user"}</span>
+                    <span className="run-when" title="Last sign-in">{fmt(u.lastSeenAt)}</span>
+                    <span className="run-scope">{u.name ?? "—"}</span>
+                    <span className="run-who">{u.email}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
       </div>
     </div>
   );

@@ -35,7 +35,7 @@ export default function UpdatePanel({ active }: { active: Active }) {
         </div>
       ) : (
         <form action={run} className="update-go">
-          <button className="primary" type="submit" disabled={starting}>{starting ? "Queuing…" : "Update all groups"}</button>
+          <button className="primary" type="submit" disabled={starting}>{starting ? "Queuing…" : "Update data"}</button>
           <p>The update runs on the Mac that hosts the WhatsApp session, so it only starts while that Mac is on and awake.</p>
         </form>
       )}

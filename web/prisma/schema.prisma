@@ -110,3 +110,13 @@ model WaChatList {
   chats     Json     // [{ id, name, t }] newest activity first
   fetchedAt DateTime
 }
+
+// People who signed in, recorded on each Google sign-in. Superadmins also see the runs and this list in /admin.
+model User {
+  email       String   @id
+  name        String?
+  image       String?
+  superadmin  Boolean  @default(false)
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+}
