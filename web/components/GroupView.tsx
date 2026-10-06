@@ -1,8 +1,8 @@
 "use client";
 
 // Group page: a compact, mobile-first vendor directory plus an opportunities tab that only signed-in users see.
-import { useActionState, useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition } from "react";
-import { addVendor, deleteVendor, type AddState } from "@/app/actions";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition } from "react";
+import { deleteVendor } from "@/app/actions";
 import VendorRow, { type Vendor } from "@/components/VendorRow";
 import { categoryCounts, fmtDate, fmtLong, fmtMonth, groupByCategory, matches } from "@/lib/filter";
 import { COPY, T, type GroupKey } from "@/lib/groupCopy";
@@ -12,7 +12,6 @@ type Opp = { key: string; rank: number; title: string; summary: string; offer: s
 type Props = { userBar?: React.ReactNode; signedIn: boolean; groupKey: GroupKey; lang: "es" | "en"; mode: "sentiment" | "type";
   status: { checkedAt: string | null; messagesThrough: string | null }; vendors: Vendor[]; opportunities: Opp[] };
 
-const initial: AddState = { status: "idle", message: "", key: 0 };
 
 // "#oportunidades" / "#opportunities" in the URL opens the second tab, as on the original pages.
 const subscribeHash = (cb: () => void) => { window.addEventListener("hashchange", cb); return () => window.removeEventListener("hashchange", cb); };
@@ -31,13 +30,9 @@ export default function GroupView({ userBar, signedIn, groupKey, lang, mode, sta
   const [openId, setOpenId] = useState<string | null>(null);
   const [confirmDel, setConfirmDel] = useState<string | null>(null);
   const [, startTransition] = useTransition();
-  const [addState, addAction, adding] = useActionState(addVendor, initial);
-  const formRef = useRef<HTMLFormElement>(null);
   const sheetRef = useRef<HTMLDialogElement>(null);
-  const addRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => { const id = setTimeout(() => setQ(qInput.trim()), 120); return () => clearTimeout(id); }, [qInput]);
-  useEffect(() => { if (addState.status === "ok") formRef.current?.reset(); }, [addState]);
 
   const showTab = (which: "vendors" | "opps") => {
     setTab(which);
@@ -49,8 +44,6 @@ export default function GroupView({ userBar, signedIn, groupKey, lang, mode, sta
   // The footer keeps the original pages' date style: DD/MM/YYYY in Spanish, "Sep 9, 2026" in English.
   const footerThrough = !status.messagesThrough ? "" : lang === "es" ? fmtDate(status.messagesThrough) : fmtLong(status.messagesThrough, "en-US");
   const maxSignals = Math.max(1, ...opportunities.map((o) => o.signals || 0));
-  const msg = addState.status === "ok" ? t.saved(addState.message)
-    : addState.status === "error" ? (addState.message === "server" ? t.saveErr : t.fieldErr) : "";
   const activeFilters = (cat ? 1 : 0) + (filter ? 1 : 0);
   const filtering = activeFilters > 0 || q !== "";
   const clearAll = () => { setCat(""); setFilter(""); setQInput(""); setQ(""); };
@@ -111,7 +104,6 @@ export default function GroupView({ userBar, signedIn, groupKey, lang, mode, sta
                 {t.filters}{activeFilters > 0 && <span className="count">{activeFilters}</span>}
               </button>
               <div className="desk-only">{opinionButtons}</div>
-              {signedIn && <button type="button" className="primary add-btn" onClick={() => addRef.current?.showModal()} aria-haspopup="dialog">{t.add}</button>}
             </div>
             <div className="chips desk-only" role="group" aria-label={t.chipsLabel}>
               <button type="button" className="chip" aria-pressed={cat === ""} onClick={() => setCat("")}>{t.allCats}<span className="n">{vendors.length}</span></button>
@@ -148,39 +140,6 @@ export default function GroupView({ userBar, signedIn, groupKey, lang, mode, sta
               <button type="button" className="primary sheet-done" onClick={() => sheetRef.current?.close()}>{t.show(shown.length)}</button>
             </div>
           </dialog>
-
-          {signedIn && (
-            <dialog ref={addRef} className="sheet add-sheet" aria-labelledby="add-title" onClick={(e) => { if (e.target === e.currentTarget) addRef.current?.close(); }}>
-              <div className="sheet-inner">
-                <div className="sheet-head">
-                  <h2 id="add-title">{t.addTitle}</h2>
-                  <button type="button" className="link" onClick={() => addRef.current?.close()}>{t.close}</button>
-                </div>
-                <p className="sheet-note">{c.addNote}</p>
-                <form className="form" ref={formRef} action={addAction} autoComplete="off">
-                  <input type="hidden" name="groupKey" value={groupKey} />
-                  <label>{t.f.name}<input name="name" required maxLength={120} autoFocus /></label>
-                  <label>{t.f.cat}<input name="category" required maxLength={60} list="cat-list" placeholder={c.catPlaceholder} /></label>
-                  <label className="full">{t.f.service}<input name="service" required maxLength={300} /></label>
-                  <label>{t.f.loc}<input name="location" maxLength={120} placeholder={t.f.locPh} /></label>
-                  <label>{t.f.contact}<input name="contact" maxLength={200} placeholder={t.f.contactPh} /></label>
-                  <label>{t.f.by}<input name="recommendedBy" maxLength={120} placeholder={t.f.byPh} /></label>
-                  <label>{t.f.sent}
-                    <select name="sentiment" defaultValue="positive">
-                      {(["positive", "mixed", "negative"] as const).map((s) => <option key={s} value={s}>{t.sent[s]}</option>)}
-                    </select>
-                  </label>
-                  <label className="full">{t.f.quote}<textarea name="quote" rows={2} maxLength={400} placeholder={c.quotePlaceholder} /></label>
-                  <div className="form-actions">
-                    <button type="submit" className="primary" disabled={adding}>{t.save}</button>
-                    <button type="button" onClick={() => { addRef.current?.close(); formRef.current?.reset(); }}>{t.cancel}</button>
-                    <span className={`msg${addState.status === "error" ? " err" : ""}`} role="status">{adding ? t.saving : msg}</span>
-                  </div>
-                </form>
-                <datalist id="cat-list">{cats.map(([name]) => <option key={name} value={name} />)}</datalist>
-              </div>
-            </dialog>
-          )}
 
           <main>
             {!vendors.length ? <div className="empty">{t.noVendors}</div>
