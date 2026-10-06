@@ -71,3 +71,17 @@ model Opportunity {
 
   @@id([groupKey, key])
 }
+
+// "Update now" requests from /admin. The site only queues them; a poller on the Mac that runs the weekly job
+// (scripts/poll-runs.mts) claims one, runs scripts/run_weekly.sh and records how it went.
+model UpdateRun {
+  id          String    @id @default(cuid())
+  requestedBy String
+  requestedAt DateTime  @default(now())
+  status      String    @default("queued") // queued | running | done | review | failed | canceled
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  message     String    @default("")
+
+  @@index([status, requestedAt])
+}

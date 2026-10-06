@@ -3,7 +3,6 @@ export type GroupKey = "overland" | "sombreros" | "members" | "briefings" | "mov
 export const GROUP_KEYS: GroupKey[] = ["overland", "sombreros", "members", "briefings", "moves"];
 
 export type GroupCopy = {
-  title: string;
   eyebrowName: string;
   h1: [string, string];
   lede: string;
@@ -81,9 +80,8 @@ export const T = {
 
 export const COPY: Record<GroupKey, GroupCopy> = {
   overland: {
-    title: "Proveedores Overland Trucks",
     eyebrowName: "Argentina Overland Trucks",
-    h1: ["Proveedores ", "recomendados"],
+    h1: ["Recomendaciones de ", "Argentina Overland Trucks"],
     lede: "Talleres, comercios y contactos que la gente del grupo recomendó en el chat. Buscá por nombre, rubro o ciudad.",
     chatFrom: "29/03/2026",
     placeholder: "Buscar: cubiertas, Victron, Mendoza, Sergio…",
@@ -97,9 +95,8 @@ export const COPY: Record<GroupKey, GroupCopy> = {
     indexDesc: "Workshops, tires, camper builders and electricians for truck campers, plus the gaps overlanders keep running into.",
   },
   sombreros: {
-    title: "Proveedores Sombreros Misteriosos",
     eyebrowName: "Sombreros misteriosos",
-    h1: ["Proveedores ", "recomendados"],
+    h1: ["Recomendaciones de ", "Sombreros misteriosos"],
     lede: "Comercios, profesionales y lugares que las familias del grado recomendaron en el chat. Buscá por nombre, rubro o barrio.",
     chatFrom: "09/09/2025",
     placeholder: "Buscar: tortas, pediatra, Munro, cumple…",
@@ -113,9 +110,8 @@ export const COPY: Record<GroupKey, GroupCopy> = {
     indexDesc: "Shops, clubs, camps and outings the class families recommend, and what parents spend most of the chat organizing.",
   },
   members: {
-    title: "Members Vendor Directory",
     eyebrowName: "🙋Members",
-    h1: ["Vendor ", "directory"],
+    h1: ["Recommendations from ", "Members"],
     lede: "Companies, products and professionals recommended or introduced in the community chat. Search by name, category or country.",
     chatFrom: "Sep 10, 2025",
     placeholder: "Search: wearables, coaching, Germany…",
@@ -129,9 +125,8 @@ export const COPY: Record<GroupKey, GroupCopy> = {
     indexDesc: "Companies members introduced or vouched for, and the intros, hires and insight they keep asking for.",
   },
   briefings: {
-    title: "Briefings Vendor Radar",
     eyebrowName: "📈Briefings",
-    h1: ["Vendor ", "directory"],
+    h1: ["Recommendations from ", "Briefings"],
     lede: "Companies, products and services that came up in the industry briefings: featured in the news, recommended by members, or introduced by their founders.",
     chatFrom: "Sep 9, 2025",
     placeholder: "Search: wearables, Basic-Fit, longevity…",
@@ -145,9 +140,8 @@ export const COPY: Record<GroupKey, GroupCopy> = {
     indexDesc: "Products and companies featured in the industry briefings, and the data members asked for.",
   },
   moves: {
-    title: "Moves Vendor Directory",
     eyebrowName: "🏃‍♀️Moves",
-    h1: ["Vendor ", "directory"],
+    h1: ["Recommendations from ", "Moves"],
     lede: "Companies, ventures and services members announced or vouched for while sharing their career moves.",
     chatFrom: "Sep 9, 2025",
     placeholder: "Search: recruiting, wearables, Berlin…",

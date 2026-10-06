@@ -3,7 +3,7 @@ import { COPY, GROUP_KEYS, T, type GroupKey } from "@/lib/groupCopy";
 import { OG_SIZE, ogImage, stripEmoji } from "@/lib/ogImage";
 import { resolveSlug } from "@/lib/slugs";
 
-export const alt = "WhatsApp group vendor directory";
+export const alt = "WhatsApp group recommendations";
 export const size = OG_SIZE;
 export const contentType = "image/png";
 

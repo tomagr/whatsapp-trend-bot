@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { COPY, GROUP_KEYS } from "@/lib/groupCopy";
 import { fmtLong } from "@/lib/filter";
 import SlugEditor from "@/components/SlugEditor";
-import UserBar from "@/components/UserBar";
+import NavBar from "@/components/NavBar";
 
 export const dynamic = "force-dynamic";
 
@@ -23,11 +23,12 @@ export default async function Index() {
   return (
     <div className="g-root g-index index">
       <div className="wrap">
-        <UserBar email={user.email} />
+        <NavBar user={user} />
         <header>
           <div className="eyebrow">5 WhatsApp groups · updated every Monday</div>
           <h1>Trend <span>pages</span></h1>
           <p className="lede">Each page lists the vendors people recommended in a group and the business opportunities behind what members keep asking for.</p>
+          <div className="header-actions"><Link className="btn" href="/admin">Admin: update messages →</Link></div>
         </header>
         {sections.map((s) => (
           <section key={s}>

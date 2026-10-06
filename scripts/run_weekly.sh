@@ -25,6 +25,25 @@ notify() {  # notify "title" "message": banner that opens the index page on clic
     -e 'end run' "$1" "$2" "$HUB" >>"$LOG" 2>&1 &
 }
 
+# Last outcome for the /admin poller (web/scripts/poll-runs.mts): the same exit codes as `trendbot summary`.
+record() {  # record CODE "message"
+  $PY -c 'import json, sys, time; json.dump({"code": int(sys.argv[1]), "message": sys.argv[2], "at": time.time()}, open("logs/last-result.json", "w"), ensure_ascii=False)' "$1" "$2"
+}
+
+# One run at a time: the Monday job and an "Update now" from /admin must not read WhatsApp Web together.
+# A lock older than 3 h is left over from a crash (every step has a time limit), so it is taken over.
+LOCK=logs/run.lock
+if ! mkdir "$LOCK" 2>/dev/null; then
+  if [[ -n $(find "$LOCK" -maxdepth 0 -mmin +180 2>/dev/null) ]]; then
+    rmdir "$LOCK" && mkdir "$LOCK" || exit 1
+  else
+    echo "== $(date): another update is already running; skipped" >> "$LOG"
+    record 4 "Ya había otra actualización en curso"
+    exit 0
+  fi
+fi
+trap 'rmdir "$LOCK" 2>/dev/null' EXIT
+
 echo "== $(date)" >> "$LOG"
 
 # 1. Is WhatsApp Web linked? (headless Chrome with the saved login in .wa-session/)
@@ -33,10 +52,12 @@ case $? in
   0) ;;
   3) MESSAGE="WhatsApp Web no está vinculado. En la carpeta del proyecto corré: python3 -m trendbot login, y escaneá el QR con el celular (WhatsApp → Dispositivos vinculados)."
      notify "WhatsApp Trend Bot: vincular WhatsApp Web" "$MESSAGE"
+     record 3 "$MESSAGE"
      echo "== preflight: not linked; notified" >> "$LOG"
      exit 1 ;;
   *) MESSAGE="WhatsApp Web no cargó. Revisá $PWD/$LOG"
      notify "WhatsApp Trend Bot: falló" "$MESSAGE"
+     record 3 "$MESSAGE"
      echo "== preflight failed; notified" >> "$LOG"
      exit 1 ;;
 esac
@@ -56,7 +77,8 @@ esac
 
 # 3. Always tell the user how it went, even when nothing changed.
 MESSAGE=$(with_timeout 60 $PY -m trendbot summary --text 2>>"$LOG")
-case $? in
+CODE=$?
+case $CODE in
   0) notify "WhatsApp Trend Bot: actualización lista" "$MESSAGE" ;;
   2) notify "WhatsApp Trend Bot: revisar" "$MESSAGE" ;;
   3) MESSAGE="$MESSAGE. Revisá $PWD/$LOG"
@@ -65,6 +87,7 @@ case $? in
      notify "WhatsApp Trend Bot: falló" "$MESSAGE" ;;
 esac
 echo "== notified: $MESSAGE" >> "$LOG"
+record $(( CODE == 0 || CODE == 2 ? CODE : 3 )) "$MESSAGE"
 
 ls -1t logs/2*.log | tail -n +13 | xargs rm -f 2>/dev/null
 exit 0

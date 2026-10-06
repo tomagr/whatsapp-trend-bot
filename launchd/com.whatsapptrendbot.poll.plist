@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.whatsapptrendbot.poll</string>
+  <!-- Picks up "Update now" requests from the site's /admin page. launchd never starts a second copy while one is
+       still running, so a long update simply delays the next check. -->
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/homebrew/bin/node</string>
+    <string>--import</string>
+    <string>tsx</string>
+    <string>scripts/poll-runs.mts</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/tomas/projects/whatsappTrendBot/web</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+  </dict>
+  <key>StartInterval</key>
+  <integer>60</integer>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/Users/tomas/projects/whatsappTrendBot/logs/poll.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/tomas/projects/whatsappTrendBot/logs/poll.log</string>
+</dict>
+</plist>

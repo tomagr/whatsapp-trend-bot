@@ -1,9 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireUser } from "@/auth";
+import { requireUser, signOut } from "@/auth";
 import { db } from "@/lib/db";
 import { renameGroupSlug } from "@/lib/slugs";
+import { cancelRun, requestRun } from "@/lib/updateRuns";
 import { createManualVendor, deleteManualVendor } from "@/lib/vendors";
 
 export type AddState = { status: "idle" | "ok" | "error"; message: string; key: number };
@@ -36,4 +37,25 @@ export async function renameSlug(prev: SlugState, form: FormData): Promise<SlugS
   if (!r.ok) return { status: "error", message: r.error, slug: prev.slug };
   revalidatePath("/", "layout");
   return { status: "ok", message: r.slug === r.previous ? "Unchanged." : `Saved. /${r.previous} now redirects here.`, slug: r.slug };
+}
+
+export type UpdateState = { status: "idle" | "ok" | "error"; message: string };
+
+// Queues an update for the Mac poller; the page then shows its progress.
+export async function requestUpdate(): Promise<UpdateState> {
+  const user = await requireUser();
+  const r = await requestRun(db(), user.email ?? "unknown");
+  revalidatePath("/admin");
+  return r.ok ? { status: "ok", message: "Queued." } : { status: "error", message: "An update is already queued or running." };
+}
+
+export async function cancelUpdate(id: string) {
+  await requireUser();
+  await cancelRun(db(), id);
+  revalidatePath("/admin");
+}
+
+// Signing out keeps the user on public pages (a group) and sends them home otherwise. Only same-site paths.
+export async function signOutTo(path: string) {
+  await signOut({ redirectTo: /^\/(?![/\\])/.test(path) ? path : "/" });
 }

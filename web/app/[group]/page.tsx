@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { auth } from "@/auth";
 import GroupView from "@/components/GroupView";
-import UserBar from "@/components/UserBar";
+import NavBar from "@/components/NavBar";
 import { db } from "@/lib/db";
 import { COPY, GROUP_KEYS, type GroupKey } from "@/lib/groupCopy";
 import { resolveSlug } from "@/lib/slugs";
@@ -18,7 +18,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { group: slug } = await params;
   const { group: g } = await resolveSlug(db(), slug);
   if (!g || !isKey(g.key)) return { title: "Not found", robots: { index: false } };
-  const { title, lede } = COPY[g.key];
+  // Same heading the page itself shows, e.g. "Recomendaciones de Sombreros misteriosos".
+  const { h1, lede } = COPY[g.key];
+  const title = h1.join("");
   const url = `/${g.slug}`;
   return {
     title,
@@ -46,7 +48,7 @@ export default async function GroupPage({ params }: Props) {
   ]);
   return (
     <GroupView
-      userBar={<UserBar email={user?.email} signOutTo={`/${g.slug}`} />}
+      userBar={<NavBar user={user} signOutTo={`/${g.slug}`} />}
       signedIn={!!user}
       groupKey={group}
       lang={g.lang === "en" ? "en" : "es"}
