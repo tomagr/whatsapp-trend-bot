@@ -28,6 +28,23 @@ export function groupByCategory<V extends ListVendor>(vs: V[], locale: string): 
     .map(([c, items]) => [c, [...items].sort((a, b) => (b.mentions || 1) - (a.mentions || 1) || a.name.localeCompare(b.name, locale))]);
 }
 
+type Dated = { name: string; mentions: number; dates: string[] };
+// Dates are ISO "YYYY-MM-DD", so the string maximum is the latest one.
+const lastDate = (v: Dated) => v.dates.reduce((a, b) => (b > a ? b : a), "");
+
+// The "most recommended" spotlight: only vendors the group brought up more than once.
+export function topPicks<V extends Dated>(vs: V[], n: number, locale: string): V[] {
+  return vs.filter((v) => (v.mentions || 1) > 1)
+    .sort((a, b) => b.mentions - a.mentions || lastDate(b).localeCompare(lastDate(a)) || a.name.localeCompare(b.name, locale))
+    .slice(0, n);
+}
+
+export function recentlyMentioned<V extends Dated>(vs: V[], n: number, locale: string): (V & { lastDate: string })[] {
+  return vs.map((v) => ({ ...v, lastDate: lastDate(v) })).filter((v) => v.lastDate)
+    .sort((a, b) => b.lastDate.localeCompare(a.lastDate) || a.name.localeCompare(b.name, locale))
+    .slice(0, n);
+}
+
 export function splitContact(c: string): ({ text: string } | { href: string; text: string })[] {
   return String(c).split(/(https?:\/\/[^\s;,]+)/g).filter(Boolean).map((p) =>
     /^https?:\/\//.test(p) ? { href: p, text: p.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "") } : { text: p });

@@ -1,10 +1,11 @@
 "use client";
 
-// Group page: a compact, mobile-first vendor directory plus an opportunities tab that only signed-in users see.
+// Group page as a guide: search, the most recommended vendors and category tiles up front, then the full directory.
+// Opportunities live in a second tab that only signed-in users see.
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition } from "react";
 import { deleteVendor } from "@/app/actions";
 import VendorRow, { type Vendor } from "@/components/VendorRow";
-import { categoryCounts, fmtDate, fmtLong, fmtMonth, groupByCategory, matches } from "@/lib/filter";
+import { categoryCounts, fmtDate, fmtLong, fmtMonth, groupByCategory, matches, recentlyMentioned, topPicks } from "@/lib/filter";
 import { COPY, T, type GroupKey } from "@/lib/groupCopy";
 
 type Opp = { key: string; rank: number; title: string; summary: string; offer: string; alternatives: string; gap: string;
@@ -16,6 +17,7 @@ type Props = { userBar?: React.ReactNode; signedIn: boolean; groupKey: GroupKey;
 // "#oportunidades" / "#opportunities" in the URL opens the second tab, as on the original pages.
 const subscribeHash = (cb: () => void) => { window.addEventListener("hashchange", cb); return () => window.removeEventListener("hashchange", cb); };
 const hashWantsOpps = () => /oportunidades|opportunities/.test(window.location.hash);
+const TILES = 10; // two rows of five on desktop, five rows of two on a phone
 
 export default function GroupView({ userBar, signedIn, groupKey, lang, mode, status, vendors, opportunities }: Props) {
   const t = T[lang];
@@ -41,12 +43,23 @@ export default function GroupView({ userBar, signedIn, groupKey, lang, mode, sta
   const cats = useMemo(() => categoryCounts(vendors, t.locale), [vendors, t.locale]);
   const shown = useMemo(() => vendors.filter((v) => matches(v, q, cat, mode, filter)), [vendors, q, cat, mode, filter]);
   const grouped = useMemo(() => groupByCategory(shown, t.locale), [shown, t.locale]);
+  const top = useMemo(() => topPicks(vendors, 3, t.locale), [vendors, t.locale]);
+  const recent = useMemo(() => recentlyMentioned(vendors, 5, t.locale), [vendors, t.locale]);
   // The footer keeps the original pages' date style: DD/MM/YYYY in Spanish, "Sep 9, 2026" in English.
   const footerThrough = !status.messagesThrough ? "" : lang === "es" ? fmtDate(status.messagesThrough) : fmtLong(status.messagesThrough, "en-US");
   const maxSignals = Math.max(1, ...opportunities.map((o) => o.signals || 0));
   const activeFilters = (cat ? 1 : 0) + (filter ? 1 : 0);
   const filtering = activeFilters > 0 || q !== "";
   const clearAll = () => { setCat(""); setFilter(""); setQInput(""); setQ(""); };
+
+  // The guide's cards and tiles jump into the directory below; scroll after React has rendered the change.
+  const scrollTo = (id: string) => requestAnimationFrame(() => {
+    const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    document.getElementById(id)?.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
+  });
+  const reveal = (id: string) => { setOpenId(id); scrollTo(`vendor-${id}`); };
+  const pickCat = (name: string) => { setCat(name); scrollTo("vendor-list"); };
+  const openOpps = () => { showTab("opps"); scrollTo("tab-opps"); };
 
   const onDelete = (id: string) => {
     if (confirmDel !== id) { setConfirmDel(id); return; }
@@ -103,13 +116,6 @@ export default function GroupView({ userBar, signedIn, groupKey, lang, mode, sta
               <button type="button" className="filters-btn" onClick={() => sheetRef.current?.showModal()} aria-haspopup="dialog">
                 {t.filters}{activeFilters > 0 && <span className="count">{activeFilters}</span>}
               </button>
-              <div className="desk-only">{opinionButtons}</div>
-            </div>
-            <div className="chips desk-only" role="group" aria-label={t.chipsLabel}>
-              <button type="button" className="chip" aria-pressed={cat === ""} onClick={() => setCat("")}>{t.allCats}<span className="n">{vendors.length}</span></button>
-              {cats.map(([name, n]) => (
-                <button key={name} type="button" className="chip" aria-pressed={cat === name} onClick={() => setCat(cat === name ? "" : name)}>{name}<span className="n">{n}</span></button>
-              ))}
             </div>
             {filtering && (
               <div className="results" role="status">
@@ -141,7 +147,63 @@ export default function GroupView({ userBar, signedIn, groupKey, lang, mode, sta
             </div>
           </dialog>
 
-          <main>
+          {!filtering && vendors.length > 0 && <div className="guide">
+            {top.length > 0 && <section aria-labelledby="top-title">
+              <h2 className="guide-h" id="top-title">{t.topPicks}</h2>
+              <ol className="picks">
+                {top.map((v, i) => (
+                  <li className="pick" key={v.id}>
+                    <div className="pick-top">
+                      <span className="pick-rank" aria-hidden="true">{i + 1}</span>
+                      <span className="pick-m"><b>{v.mentions}</b>{t.mention(v.mentions)}</span>
+                    </div>
+                    <div>
+                      <h3>{v.name}</h3>
+                      <p className="pick-where">{[v.category, v.location].filter(Boolean).join(" · ")}</p>
+                    </div>
+                    {v.quote ? <blockquote>“{v.quote}”</blockquote> : <p className="pick-service">{v.service}</p>}
+                    <button type="button" className="ghost-btn" onClick={() => reveal(v.id)}>{t.seeContact}<span className="sr-only">: {v.name}</span></button>
+                  </li>
+                ))}
+              </ol>
+            </section>}
+
+            <section aria-labelledby="cats-title">
+              <h2 className="guide-h" id="cats-title">{t.explore}</h2>
+              <ul className="tiles">
+                {cats.slice(0, cats.length > TILES ? TILES - 1 : TILES).map(([name, n]) => (
+                  <li key={name}><button type="button" className="tile" onClick={() => pickCat(name)}><span className="tile-n">{n}</span><span>{name}</span></button></li>
+                ))}
+                {/* Long tails of one-vendor categories go to the filter sheet instead of a wall of tiles. */}
+                {cats.length > TILES && <li><button type="button" className="tile tile-more" onClick={() => sheetRef.current?.showModal()} aria-haspopup="dialog">
+                  <span className="tile-n">+{cats.length - TILES + 1}</span><span>{t.allCats}</span>
+                </button></li>}
+              </ul>
+            </section>
+
+            {(recent.length > 0 || (signedIn && opportunities.length > 0)) && <div className="guide-row">
+              {recent.length > 0 && <section className="recent" aria-labelledby="recent-title">
+                <h2 className="guide-h small" id="recent-title">{t.recent}</h2>
+                <ul>
+                  {recent.map((v) => (
+                    <li key={v.id}><button type="button" onClick={() => reveal(v.id)}>
+                      <span className="recent-main"><b>{v.name}</b><span>{[v.category, v.location].filter(Boolean).join(" · ")}</span></span>
+                      <span className="recent-when">{fmtLong(v.lastDate, t.locale)}</span>
+                    </button></li>
+                  ))}
+                </ul>
+              </section>}
+              {signedIn && opportunities.length > 0 && <aside className="opps-teaser" aria-labelledby="teaser-title">
+                <span className="teaser-kicker">{t.membersOnly}</span>
+                <h2 id="teaser-title">{t.oppsTeaser(opportunities.length)}</h2>
+                <p>{t.oppsFirst} {opportunities[0].title}. <b>{opportunities[0].signals || 0} {t.signals} · {opportunities[0].people || 0} {t.people}</b></p>
+                <button type="button" onClick={openOpps}>{t.oppsCta}</button>
+              </aside>}
+            </div>}
+          </div>}
+
+          <main id="vendor-list">
+            {!filtering && vendors.length > 0 && <h2 className="guide-h">{t.allVendors}</h2>}
             {!vendors.length ? <div className="empty">{t.noVendors}</div>
               : !shown.length ? <div className="empty">{t.noMatch}<br /><button type="button" className="link" onClick={clearAll}>{t.clear}</button></div>
               : grouped.map(([category, items]) => (

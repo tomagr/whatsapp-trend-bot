@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
-import { categoryCounts, fmtDate, groupByCategory, matches, splitContact } from "@/lib/filter";
+import { categoryCounts, fmtDate, groupByCategory, matches, recentlyMentioned, splitContact, topPicks } from "@/lib/filter";
 
-const v = (o: Record<string, unknown>) => ({ name: "", category: "", service: "", location: "", contact: "", recommendedBy: "", quote: "", mentions: 1, sentiment: "positive", type: null, ...o });
+const v = (o: Record<string, unknown>) => ({ name: "", category: "", service: "", location: "", contact: "", recommendedBy: "", quote: "", mentions: 1, sentiment: "positive", type: null, dates: [] as string[], ...o });
 
 test("matches ignores accents and case", () => {
   const x = v({ name: "Gomería Sur", category: "Neumáticos", contact: "Victron dealer" });
@@ -37,4 +37,25 @@ test("splitContact never links non-http schemes", () => {
 
 test("fmtDate renders DD/MM/YYYY like today's pages", () => {
   expect(fmtDate("2026-07-22")).toBe("22/07/2026");
+});
+
+test("topPicks keeps vendors recommended more than once, most mentions first, newest breaking ties", () => {
+  const out = topPicks([
+    v({ name: "once", mentions: 1, dates: ["2026-09-01"] }),
+    v({ name: "old", mentions: 3, dates: ["2026-01-01"] }),
+    v({ name: "new", mentions: 3, dates: ["2026-05-01", "2026-02-01"] }),
+    v({ name: "top", mentions: 7, dates: [] }),
+    v({ name: "two", mentions: 2, dates: [] }),
+  ], 3, "es");
+  expect(out.map((x) => x.name)).toEqual(["top", "new", "old"]);
+});
+
+test("recentlyMentioned orders by latest date and skips vendors without dates", () => {
+  const out = recentlyMentioned([
+    v({ name: "a", dates: ["2026-03-01"] }),
+    v({ name: "b", dates: ["2026-01-01", "2026-09-10"] }),
+    v({ name: "none", dates: [] }),
+    v({ name: "c", dates: ["2026-06-01"] }),
+  ], 2, "es");
+  expect(out.map((x) => [x.name, x.lastDate])).toEqual([["b", "2026-09-10"], ["c", "2026-06-01"]]);
 });

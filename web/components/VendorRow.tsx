@@ -22,7 +22,7 @@ export default function VendorRow({ v, t, pill, open, onToggle, canDelete, confi
     try { await navigator.clipboard.writeText(v.contact); setCopied(true); setTimeout(() => setCopied(false), 1600); } catch {}
   };
   return (
-    <article className={`vrow${open ? " open" : ""}`}>
+    <article className={`vrow${open ? " open" : ""}`} id={`vendor-${v.id}`}>
       <button type="button" className="vrow-head" aria-expanded={open} aria-controls={panelId} onClick={onToggle}>
         <span className="vrow-main">
           <span className="vrow-name">{v.name}{v.source === "manual" && <span className="badge-new">{t.badge}</span>}</span>

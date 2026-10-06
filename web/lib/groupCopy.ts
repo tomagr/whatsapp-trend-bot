@@ -46,6 +46,9 @@ export const T = {
     show: (n: number) => (n === 1 ? "Ver 1 proveedor" : `Ver ${n} proveedores`),
     copy: "Copiar contacto", copied: "Copiado", askGroup: "El contacto se compartió en el grupo: pedilo ahí.",
     opinion: "Opinión", saidBy: "Lo dijo",
+    topPicks: "Los más recomendados", explore: "Explorá por rubro", recent: "Mencionados hace poco", allVendors: "Todos los proveedores",
+    seeContact: "Ver contacto", membersOnly: "Solo para miembros", oppsCta: "Ver oportunidades", oppsFirst: "La primera:",
+    oppsTeaser: (n: number) => (n === 1 ? "1 cosa que el grupo pide y nadie resuelve" : `${n} cosas que el grupo pide y nadie resuelve`),
   },
   en: {
     locale: "en-GB", eyebrow: "WhatsApp group · ", vendors: "vendors", cats: "categories",
@@ -75,6 +78,9 @@ export const T = {
     show: (n: number) => (n === 1 ? "Show 1 vendor" : `Show ${n} vendors`),
     copy: "Copy contact", copied: "Copied", askGroup: "The contact was shared in the group: ask for it there.",
     opinion: "Source", saidBy: "Said by",
+    topPicks: "Most recommended", explore: "Browse by category", recent: "Mentioned recently", allVendors: "All vendors",
+    seeContact: "See contact", membersOnly: "Members only", oppsCta: "See opportunities", oppsFirst: "Top of the list:",
+    oppsTeaser: (n: number) => (n === 1 ? "1 thing the group keeps asking for" : `${n} things the group keeps asking for`),
   },
 };
 
