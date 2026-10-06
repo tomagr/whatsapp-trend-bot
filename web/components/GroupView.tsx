@@ -1,6 +1,6 @@
 "use client";
 
-// Group page: a compact, mobile-first vendor directory plus the (signed-in only) opportunities tab.
+// Group page: a compact, mobile-first vendor directory plus an opportunities tab that only signed-in users see.
 import { useActionState, useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition } from "react";
 import { addVendor, deleteVendor, type AddState } from "@/app/actions";
 import VendorRow, { type Vendor } from "@/components/VendorRow";
@@ -9,7 +9,7 @@ import { COPY, T, type GroupKey } from "@/lib/groupCopy";
 
 type Opp = { key: string; rank: number; title: string; summary: string; offer: string; alternatives: string; gap: string;
   signals: number; people: number; firstDate: string; lastDate: string; quotes: { date?: string; who?: string; text?: string }[] };
-type Props = { userBar?: React.ReactNode; signedIn: boolean; loginHref: string; groupKey: GroupKey; lang: "es" | "en"; mode: "sentiment" | "type";
+type Props = { userBar?: React.ReactNode; signedIn: boolean; groupKey: GroupKey; lang: "es" | "en"; mode: "sentiment" | "type";
   status: { checkedAt: string | null; messagesThrough: string | null }; vendors: Vendor[]; opportunities: Opp[] };
 
 const initial: AddState = { status: "idle", message: "", key: 0 };
@@ -18,12 +18,12 @@ const initial: AddState = { status: "idle", message: "", key: 0 };
 const subscribeHash = (cb: () => void) => { window.addEventListener("hashchange", cb); return () => window.removeEventListener("hashchange", cb); };
 const hashWantsOpps = () => /oportunidades|opportunities/.test(window.location.hash);
 
-export default function GroupView({ userBar, signedIn, loginHref, groupKey, lang, mode, status, vendors, opportunities }: Props) {
+export default function GroupView({ userBar, signedIn, groupKey, lang, mode, status, vendors, opportunities }: Props) {
   const t = T[lang];
   const c = COPY[groupKey];
   const [tabChoice, setTab] = useState<"vendors" | "opps" | null>(null);
   const fromHash = useSyncExternalStore(subscribeHash, hashWantsOpps, () => false);
-  const tab = tabChoice ?? (fromHash ? "opps" : "vendors");
+  const tab = !signedIn ? "vendors" : tabChoice ?? (fromHash ? "opps" : "vendors");
   const [q, setQ] = useState("");
   const [qInput, setQInput] = useState("");
   const [cat, setCat] = useState("");
@@ -88,7 +88,7 @@ export default function GroupView({ userBar, signedIn, loginHref, groupKey, lang
           </p>
         </header>
 
-        <nav className="tabs" role="tablist" aria-label={t.tabsLabel}
+        {signedIn && <nav className="tabs" role="tablist" aria-label={t.tabsLabel}
           onKeyDown={(e) => {
             if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
             const n = tab === "vendors" ? "opps" : "vendors";
@@ -99,11 +99,11 @@ export default function GroupView({ userBar, signedIn, loginHref, groupKey, lang
             {t.tabVendors}<span className="n">{vendors.length}</span>
           </button>
           <button type="button" className="tab" role="tab" id="tab-btn-opps" aria-controls="tab-opps" aria-selected={tab === "opps"} tabIndex={tab === "opps" ? 0 : -1} onClick={() => showTab("opps")}>
-            {t.tabOpps}<span className="n">{signedIn ? opportunities.length || "" : <span aria-label="🔒">🔒</span>}</span>
+            {t.tabOpps}<span className="n">{opportunities.length || ""}</span>
           </button>
-        </nav>
+        </nav>}
 
-        <div id="tab-vendors" role="tabpanel" aria-labelledby="tab-btn-vendors" hidden={tab !== "vendors"}>
+        <div id="tab-vendors" role={signedIn ? "tabpanel" : undefined} aria-labelledby={signedIn ? "tab-btn-vendors" : undefined} hidden={tab !== "vendors"}>
           <div className="toolbar">
             <div className="row">
               <div className="search"><input type="search" value={qInput} onChange={(e) => setQInput(e.target.value)} placeholder={c.placeholder} aria-label={t.searchLabel} enterKeyHint="search" /></div>
@@ -200,14 +200,8 @@ export default function GroupView({ userBar, signedIn, loginHref, groupKey, lang
           </main>
         </div>
 
-        <section id="tab-opps" role="tabpanel" aria-labelledby="tab-btn-opps" hidden={tab !== "opps"}>
+        {signedIn && <section id="tab-opps" role="tabpanel" aria-labelledby="tab-btn-opps" hidden={tab !== "opps"}>
           <div className="opps-head"><p>{t.oppsLede}</p></div>
-          {!signedIn ? (
-            <div className="opps-locked">
-              <p>{t.oppsLocked}</p>
-              <a className="signin" href={loginHref}>{t.signIn}</a>
-            </div>
-          ) : <>
           <div className="opps">
             {!opportunities.length ? <div className="empty">{t.oppsEmpty}</div> : opportunities.map((o) => (
               <article className="opp" key={o.key}>
@@ -235,8 +229,7 @@ export default function GroupView({ userBar, signedIn, loginHref, groupKey, lang
             ))}
           </div>
           <p className="opps-method">{t.oppsMethod}</p>
-          </>}
-        </section>
+        </section>}
 
         <footer>{c.footer(c.chatFrom, footerThrough)}</footer>
       </div>

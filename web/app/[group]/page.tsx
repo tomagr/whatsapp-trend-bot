@@ -35,9 +35,8 @@ export default async function GroupPage({ params }: Props) {
   ]);
   return (
     <GroupView
-      userBar={<UserBar email={user?.email} loginHref={`/login?callbackUrl=${encodeURIComponent(`/${g.slug}`)}`} />}
+      userBar={<UserBar email={user?.email} />}
       signedIn={!!user}
-      loginHref={`/login?callbackUrl=${encodeURIComponent(`/${g.slug}#${g.lang === "en" ? "opportunities" : "oportunidades"}`)}`}
       groupKey={group}
       lang={g.lang === "en" ? "en" : "es"}
       mode={g.vendorMode === "type" ? "type" : "sentiment"}
