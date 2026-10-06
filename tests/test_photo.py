@@ -53,9 +53,14 @@ class GroupPhotoTest(unittest.TestCase):
         self.assertFalse((self.home / "state" / "overland" / "photo.jpg").exists())
 
     def test_groups_that_scrub_child_names_never_publish_their_photo(self):
-        self.pipeline.save_photo(self.cfg["sombreros"], self.chat({"type": "image/jpeg", "data": base64.b64encode(JPEG).decode()}))
+        # A class group that scrubs children's names and did not opt in with privacy.publish_photo.
+        cfg = {**self.cfg["sombreros"], "privacy": {"scrub_child_names": True}}
+        self.pipeline.save_photo(cfg, self.chat({"type": "image/jpeg", "data": base64.b64encode(JPEG).decode()}))
         self.assertFalse(list((self.home / "state" / "sombreros").glob("photo*")))
-        self.assertIsNone(self.snap("sombreros")["photo"])
+        self.assertFalse(self.pipeline.photo_allowed(cfg))
+
+    def test_a_group_can_opt_in_to_publishing_its_photo(self):
+        self.assertTrue(self.pipeline.photo_allowed({"privacy": {"scrub_child_names": True, "publish_photo": True}}))
 
     def test_unexpected_types_are_ignored(self):
         self.pipeline.save_photo(self.cfg["overland"], self.chat({"type": "text/html", "data": base64.b64encode(b"<x>").decode()}))

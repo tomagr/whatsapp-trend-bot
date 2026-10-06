@@ -170,6 +170,50 @@ def analyze(run=None, model_name="sonnet", timeout=900):
     return manifest
 
 
+# ---- 2b. describe: one line for the page of each group added from /admin ----
+
+def _ask_claude(prompt, model_name="sonnet", timeout=180):
+    """One headless Claude call that can only produce text (same lockdown as analyze)."""
+    res = subprocess.run(["claude", "-p", "--model", model_name, "--output-format", "json",
+                          "--setting-sources", "user", "--tools", "", "--strict-mcp-config"],
+                         input=prompt, capture_output=True, text=True, timeout=timeout, cwd=RUNS if RUNS.exists() else None)
+    if res.returncode != 0:
+        raise RuntimeError(res.stderr.strip()[-500:] or "claude exited with an error")
+    return json.loads(res.stdout).get("result", "")
+
+
+def describe():
+    """Write state/<key>/description.json for added groups: when they first have vendors, and again when the
+    vendor list has doubled since. Built-in groups keep their hand-written copy. Failures only skip the description."""
+    out = {}
+    for cfg in groups():
+        if not cfg.get("added"):
+            continue
+        gdir = group_dir(cfg["key"])
+        vendors = [v["doc"] for v in load(gdir / "vendors.json", {}).values()]
+        prev = load(gdir / "description.json", None)
+        if not vendors or (prev and len(vendors) < 2 * prev.get("vendors", 0)):
+            continue
+        cats = {}
+        for v in vendors:
+            if v.get("category"):
+                cats[v["category"]] = cats.get(v["category"], 0) + 1
+        top = ", ".join(c for c, _ in sorted(cats.items(), key=lambda kv: -kv[1])[:8])
+        lang = "Spanish (Argentina, voseo)" if cfg["lang"] == "es" else "English"
+        prompt = (f"Write one sentence of at most 25 words, in {lang}, for the top of a web page that lists the vendors "
+                  f"people recommended in the WhatsApp group \"{cfg['name']}\". The group is about: {cfg['context']}. "
+                  f"Most recommended categories: {top or 'various'}. Say what kinds of businesses and services people "
+                  f"recommend there. Do not name any person or business. Reply with the sentence only.")
+        try:
+            text = " ".join(_ask_claude(prompt).split()).strip().strip('"')
+            if 10 <= len(text) <= 300:
+                save(gdir / "description.json", {"text": text, "vendors": len(vendors), "at": _now()})
+                out[cfg["key"]] = text
+        except Exception as e:
+            print(f"describe {cfg['key']} failed: {e}")
+    return out
+
+
 # ---- 3. merge: fold the analysis into state, advance the cursor, drop raw text ----
 
 def merge(run=None):
@@ -244,6 +288,8 @@ def export():
             "vendors": {p.split("/", 1)[1]: d for p, d in docs.items() if p.startswith("vendors/")},
             "opportunities": {p.split("/", 1)[1]: d for p, d in docs.items() if p.startswith("opportunities/")},
         }
+        if cfg.get("added"):  # written by describe(); missing until the group has vendors
+            snap["group"]["description"] = (load(group_dir(cfg["key"]) / "description.json", None) or {}).get("text")
         save(group_dir(cfg["key"]) / "site.json", snap)
         out[cfg["key"]] = {"vendors": len(snap["vendors"]), "opportunities": len(snap["opportunities"])}
     return out

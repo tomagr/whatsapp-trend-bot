@@ -41,3 +41,10 @@ test("rejects slugs used by another group, current or past", async () => {
   expect((await renameGroupSlug(t.prisma, "overland", "members")).ok).toBe(false);
   expect((await t.prisma.group.findUniqueOrThrow({ where: { key: "overland" } })).slug).toBe("overland");
 });
+
+test("a removed group and its old slugs no longer resolve", async () => {
+  await renameGroupSlug(t.prisma, "overland", "trucks");
+  await t.prisma.group.update({ where: { key: "overland" }, data: { removedAt: new Date() } });
+  expect(await resolveSlug(t.prisma, "trucks")).toEqual({});
+  expect(await resolveSlug(t.prisma, "overland")).toEqual({});
+});

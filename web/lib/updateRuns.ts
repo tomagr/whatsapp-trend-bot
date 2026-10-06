@@ -46,10 +46,17 @@ export async function claimNext(prisma: PrismaClient, now = new Date()) {
 export async function finishRun(prisma: PrismaClient, id: string, status: Exclude<RunStatus, "queued" | "running" | "canceled">, message: string, now = new Date()) {
   const run = await prisma.updateRun.update({ where: { id }, data: { status, message, finishedAt: now } });
   await prisma.updateRun.updateMany({
-    where: { status: "queued", requestedAt: { lte: run.startedAt ?? now }, ...(run.groupKey ? { groupKey: run.groupKey } : {}) },
+    where: { status: "queued", kind: run.kind, requestedAt: { lte: run.startedAt ?? now }, ...(run.groupKey ? { groupKey: run.groupKey } : {}) },
     data: { status, message, startedAt: run.startedAt, finishedAt: now },
   });
   return run;
+}
+
+// "Add group" needs the Mac's current list of WhatsApp groups; one request at a time, reused while it is pending.
+export async function requestChatList(prisma: PrismaClient, email: string, now = new Date()) {
+  const pending = await prisma.updateRun.findFirst({ where: { kind: "list-chats", status: { in: ["queued", "running"] } }, orderBy: { requestedAt: "desc" } });
+  if (pending && !isStale(pending, now)) return pending;
+  return prisma.updateRun.create({ data: { requestedBy: email, requestedAt: now, kind: "list-chats" } });
 }
 
 export function recentRuns(prisma: PrismaClient, take = 10) {

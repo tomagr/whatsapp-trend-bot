@@ -156,6 +156,45 @@ footer { margin-top: 40px; font-size: 12.5px; color: var(--muted); max-width: 75
 .index .slug-edit button { padding: 6px 12px; font-size: 13px; }
 .index .slug-msg { flex-basis: 100%; margin: 0; color: var(--muted); }
 .index .slug-msg.error { color: var(--signal); }
+/* ---- groups added from /admin: row colour pair, and the "Add group" picker ---- */
+.index a.page.custom { --c: var(--c-l); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .index a.page.custom { --c: var(--c-d); } }
+:root[data-theme="dark"] .index a.page.custom { --c: var(--c-d); }
+.groups-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.groups-head h2 { margin: 0; }
+.groups-head .add-group { flex-basis: 100%; }
+.add-group { display: grid; gap: 12px; padding: 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.add-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.add-head h3 { margin: 0; font-size: 17px; }
+.add-group button.link, .add-hint button.link { border: 0; background: none; padding: 4px 2px; color: var(--signal); text-decoration: underline; text-underline-offset: 3px; font-size: 13.5px; }
+.add-hint { margin: 0; font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.add-wait { display: flex; align-items: center; gap: 10px; margin: 0; color: var(--muted); font-size: 14px; }
+.chat-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); max-height: 420px; overflow-y: auto; }
+.chat-list li { border-bottom: 1px solid var(--line); }
+.chat-list li.muted { padding: 12px 4px; color: var(--muted); }
+.chat-list button { display: flex; width: 100%; justify-content: space-between; align-items: baseline; gap: 12px; padding: 11px 6px; border: 0; border-radius: 0; background: none; color: var(--ink); text-align: left; min-height: 44px; }
+.chat-list button:hover { background: var(--bg); }
+.chat-list button:focus-visible { outline: 2px solid var(--signal); outline-offset: -2px; }
+.chat-name { font-weight: 600; overflow-wrap: anywhere; }
+.chat-tag { margin-left: 8px; padding: 1px 7px; border: 1px solid var(--line); border-radius: 999px; font-family: var(--font-mono); font-size: 11px; font-weight: 400; color: var(--muted); }
+.chat-when { flex: none; font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.add-form { display: grid; gap: 14px; margin: 0; }
+.add-form fieldset { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; padding: 0; border: 0; }
+.add-form fieldset label { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; }
+.add-form fieldset input { width: auto; margin: 0; }
+.add-form legend { padding: 0; margin-bottom: 6px; font-weight: 600; font-size: 14px; }
+.add-form .field { display: grid; gap: 6px; }
+.add-form .field > span { font-weight: 600; font-size: 14px; }
+.add-form .field i { font-weight: 400; color: var(--muted); }
+.add-form small { color: var(--muted); font-size: 12.5px; }
+.add-form .check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+.add-form .check input { width: auto; margin-top: 3px; }
+.add-form .primary { justify-self: start; background: var(--ink); color: var(--bg); border-color: var(--ink); padding: 11px 18px; min-height: 44px; }
+.add-note { margin: 0; color: var(--muted); font-size: 13px; }
+.add-picked { margin: 0; font-size: 16px; }
+.add-done { margin: 0; }
+.add-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
 /* ---- WhatsApp group photo (stored by the weekly run) ---- */
 .eyebrow-row { display: flex; align-items: center; gap: 12px; }
 .group-photo { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; flex: none; border: 2px solid var(--line); }
@@ -202,6 +241,9 @@ footer { margin-top: 40px; font-size: 12.5px; color: var(--muted); max-width: 75
 .run-status.s-failed { color: var(--neg); }
 .run-when { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .run-who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.runs-more > summary { cursor: pointer; width: fit-content; margin-top: 10px; padding: 8px 2px; font-family: var(--font-mono); font-size: 12.5px; color: var(--signal); }
+.runs-more > summary:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+.runs-more[open] > summary { margin-bottom: 6px; }
 .run-scope { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .run-msg { grid-column: 2 / -1; color: var(--muted); font-size: 13.5px; overflow-wrap: anywhere; }
 @media (max-width: 560px) {
@@ -384,3 +426,16 @@ dialog.sheet::backdrop { background: rgb(0 0 0 / .45); }
   .tile { min-height: 96px; padding: 14px; }
   .tile-n { font-size: 30px; }
 }
+
+/* ---- remove / restore a group in /admin ---- */
+.group-remove { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; grid-column: 1 / -1; padding: 0 6px 14px 50px; margin-top: -6px; font-size: 13px; }
+.group-remove button { padding: 5px 12px; font-size: 13px; min-height: 32px; }
+.group-remove button.link { border: 0; background: none; padding: 4px 2px; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; min-height: 0; }
+.group-remove .danger { border-color: var(--neg); color: var(--neg); background: none; font-weight: 600; }
+.group-remove .danger:hover { background: var(--neg); color: var(--bg); }
+.group-remove p { margin: 0; color: var(--muted); flex-basis: 100%; }
+.removed-groups { margin-top: 18px; }
+.removed-groups > summary { cursor: pointer; width: fit-content; padding: 8px 2px; font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); }
+.removed-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 6px; border-bottom: 1px solid var(--line); }
+.removed-row .meta { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.removed-row button { padding: 6px 14px; font-size: 13px; min-height: 36px; }

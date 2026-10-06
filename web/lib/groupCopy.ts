@@ -13,7 +13,7 @@ export type GroupCopy = {
   catPlaceholder: string;
   quotePlaceholder: string;
   footer: (from: string, through: string) => string;
-  community: "Communities" | "Fitness & health tech";
+  community: string;
   indexMeta: string;
   indexDesc: string;
 };
@@ -161,3 +161,41 @@ export const COPY: Record<GroupKey, GroupCopy> = {
     indexDesc: "New ventures and wearables shared alongside career moves, and the partners and testers founders look for.",
   },
 };
+
+// What the pages know about a group. Groups added from /admin have no hand-written COPY entry, so their copy comes
+// from copyFor()'s template; it runs on the server and in GroupView, so it has to stay a pure function.
+export type GroupInfo = { key: string; name: string; lang: string; vendorMode: string; description?: string | null; addedAt?: string | Date | null };
+
+export const ADDED_SECTION = "Added groups";
+export const isBuiltIn = (key: string): key is GroupKey => (GROUP_KEYS as string[]).includes(key);
+
+const MONTHS = { es: "ene feb mar abr may jun jul ago sep oct nov dic".split(" "), en: "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ") };
+
+export function copyFor(g: GroupInfo): GroupCopy {
+  if (isBuiltIn(g.key)) return COPY[g.key];
+  const es = g.lang !== "en";
+  const added = g.addedAt ? new Date(g.addedAt) : null;
+  const since = added ? `${MONTHS[es ? "es" : "en"][added.getUTCMonth()]} ${added.getUTCFullYear()}` : "";
+  const typed = g.vendorMode === "type";
+  return {
+    eyebrowName: g.name,
+    h1: es ? ["Recomendaciones de ", g.name] : ["Recommendations from ", g.name],
+    lede: g.description?.trim() || (es
+      ? "Comercios, profesionales y contactos que la gente del grupo recomendó en el chat. Buscá por nombre, rubro o lugar."
+      : "Companies, products and professionals recommended in the group chat. Search by name, category or place."),
+    chatFrom: "",
+    placeholder: es ? "Buscar por nombre, rubro o lugar…" : "Search by name, category or place…",
+    filters: typed
+      ? (es ? [["recommendation", "Recomendados"], ["self-promotion", "Se presentaron"]] : [["recommendation", "Recommended"], ["self-promotion", "Self-introduced"]])
+      : (es ? [["positive", "Positivas"], ["mixed", "Con reparos"]] : [["positive", "Positive"], ["mixed", "Mixed"]]),
+    addNote: "",
+    catPlaceholder: "",
+    quotePlaceholder: "",
+    footer: (_from, through) => es
+      ? `Lista armada a partir de los mensajes del grupo${through ? ` hasta el ${through}` : ""}. Las menciones cuentan los días distintos en que alguien recomendó al proveedor. Antes de contratar, confirmá datos y precios con el proveedor.`
+      : `Built from the group’s messages${through ? ` through ${through}` : ""}. Mentions count the distinct days a vendor came up. Check details and prices with the vendor before hiring.`,
+    community: ADDED_SECTION,
+    indexMeta: `${es ? "ES" : "EN"}${since ? ` · added ${since}` : ""}`,
+    indexDesc: g.description?.trim() || (es ? "Recomendaciones del grupo de WhatsApp." : "Recommendations from the WhatsApp group."),
+  };
+}

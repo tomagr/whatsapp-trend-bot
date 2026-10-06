@@ -2,6 +2,7 @@
 //
 //   node export.mjs login    opens a visible WhatsApp Web window; scan the QR with the phone once
 //   node export.mjs check    exit 0 when the saved login works, 3 when WhatsApp Web needs a QR scan
+//   node export.mjs list     stdout {"chats": [{id, name, t, archived}]}: every group, newest activity first (the /admin picker)
 //   node export.mjs export   stdin {"groups": [{"name", "since"}]} -> stdout {"groups": {name: {chat, messages, photo?} | {error}}}
 //
 // `since` is a unix timestamp; messages at or after it are returned. `photo` is the group photo ({type, data: base64}),
@@ -79,7 +80,7 @@ function start(client, { waitForScan = false, timeout = READY_TIMEOUT_MS } = {})
 function listGroups() {
   return window.require('WAWebCollections').Chat.getModelsArray()
     .filter((c) => c.id.server === 'g.us')
-    .map((c) => ({ id: c.id._serialized, name: c.formattedTitle || c.name || '', archived: !!c.archive }));
+    .map((c) => ({ id: c.id._serialized, name: c.formattedTitle || c.name || '', archived: !!c.archive, t: c.t || 0 }));
 }
 
 function findGroup(groups, name) {
@@ -184,6 +185,12 @@ async function main() {
       console.log('ok');
     } else if (cmd === 'check') {
       console.log('ok');
+    } else if (cmd === 'list') {
+      await new Promise((r) => setTimeout(r, SETTLE_MS));
+      const groups = await client.pupPage.evaluate(listGroups);
+      // Archived groups included: the picker marks them.
+      const chats = groups.filter((c) => c.name).sort((a, b) => b.t - a.t).map(({ id, name, t, archived }) => ({ id, name, t, archived }));
+      process.stdout.write(JSON.stringify({ chats }));
     } else if (cmd === 'export') {
       const req = await readStdin();
       await new Promise((r) => setTimeout(r, SETTLE_MS));

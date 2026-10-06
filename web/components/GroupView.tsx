@@ -7,11 +7,12 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransiti
 import { deleteVendor } from "@/app/actions";
 import VendorRow, { type Vendor } from "@/components/VendorRow";
 import { categoryCounts, fmtDate, fmtLong, fmtMonth, groupByCategory, matches, recentlyMentioned, topPicks } from "@/lib/filter";
-import { COPY, T, type GroupKey } from "@/lib/groupCopy";
+import { copyFor, isBuiltIn, T, type GroupInfo } from "@/lib/groupCopy";
+import { accentVars } from "@/lib/groupStyle";
 
 type Opp = { key: string; rank: number; title: string; summary: string; offer: string; alternatives: string; gap: string;
   signals: number; people: number; firstDate: string; lastDate: string; quotes: { date?: string; who?: string; text?: string }[] };
-type Props = { userBar?: React.ReactNode; signedIn: boolean; groupKey: GroupKey; lang: "es" | "en"; mode: "sentiment" | "type";
+type Props = { userBar?: React.ReactNode; signedIn: boolean; group: GroupInfo & { color?: string | null }; lang: "es" | "en"; mode: "sentiment" | "type";
   status: { checkedAt: string | null; messagesThrough: string | null }; photoUrl?: string | null; vendors: Vendor[]; opportunities: Opp[] };
 
 
@@ -20,9 +21,10 @@ const subscribeHash = (cb: () => void) => { window.addEventListener("hashchange"
 const hashWantsOpps = () => /oportunidades|opportunities/.test(window.location.hash);
 const TILES = 10; // two rows of five on desktop, five rows of two on a phone
 
-export default function GroupView({ userBar, signedIn, groupKey, lang, mode, status, photoUrl, vendors, opportunities }: Props) {
+export default function GroupView({ userBar, signedIn, group, lang, mode, status, photoUrl, vendors, opportunities }: Props) {
   const t = T[lang];
-  const c = COPY[groupKey];
+  const c = copyFor(group);
+  const groupKey = group.key;
   const [tabChoice, setTab] = useState<"vendors" | "opps" | null>(null);
   const fromHash = useSyncExternalStore(subscribeHash, hashWantsOpps, () => false);
   const tab = !signedIn ? "vendors" : tabChoice ?? (fromHash ? "opps" : "vendors");
@@ -81,7 +83,9 @@ export default function GroupView({ userBar, signedIn, groupKey, lang, mode, sta
   );
 
   return (
-    <div className={`g-root g-${groupKey}`} lang={lang}>
+    // Built-in groups have their palette in groups.css; added ones use .g-custom with their own accent pair.
+    <div className={`g-root ${isBuiltIn(groupKey) ? `g-${groupKey}` : "g-custom"}`} lang={lang}
+      style={isBuiltIn(groupKey) ? undefined : accentVars(group.color, "accent")}>
       <div className="wrap">
         {userBar}
         <header className="top">

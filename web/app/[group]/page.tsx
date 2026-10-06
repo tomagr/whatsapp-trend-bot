@@ -5,7 +5,7 @@ import GroupView from "@/components/GroupView";
 import NavBar from "@/components/NavBar";
 import { groupPhotoUrl } from "@/lib/groupPhoto";
 import { db } from "@/lib/db";
-import { COPY, GROUP_KEYS, type GroupKey } from "@/lib/groupCopy";
+import { copyFor } from "@/lib/groupCopy";
 import { resolveSlug } from "@/lib/slugs";
 import { SITE_NAME } from "@/lib/site";
 
@@ -13,14 +13,12 @@ export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ group: string }> };
 
-const isKey = (k: string): k is GroupKey => (GROUP_KEYS as string[]).includes(k);
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { group: slug } = await params;
   const { group: g } = await resolveSlug(db(), slug);
-  if (!g || !isKey(g.key)) return { title: "Not found", robots: { index: false } };
+  if (!g) return { title: "Not found", robots: { index: false } };
   // Same heading the page itself shows, e.g. "Recomendaciones de Sombreros misteriosos".
-  const { h1, lede } = COPY[g.key];
+  const { h1, lede } = copyFor(g);
   const title = h1.join("");
   const url = `/${g.slug}`;
   return {
@@ -38,7 +36,7 @@ export default async function GroupPage({ params }: Props) {
   const user = (await auth())?.user;
   const { group: g, redirectTo } = await resolveSlug(db(), slug);
   if (redirectTo) permanentRedirect(`/${redirectTo}`);
-  if (!g || !isKey(g.key)) notFound();
+  if (!g) notFound();
   const group = g.key;
   const [vendors, opportunities] = await Promise.all([
     db().vendor.findMany({ where: { groupKey: group, deletedAt: null },
@@ -51,7 +49,7 @@ export default async function GroupPage({ params }: Props) {
     <GroupView
       userBar={<NavBar user={user} signOutTo={`/${g.slug}`} />}
       signedIn={!!user}
-      groupKey={group}
+      group={{ key: g.key, name: g.name, lang: g.lang, vendorMode: g.vendorMode, description: g.description, addedAt: g.addedAt?.toISOString() ?? null, color: g.color }}
       lang={g.lang === "en" ? "en" : "es"}
       mode={g.vendorMode === "type" ? "type" : "sentiment"}
       status={{ checkedAt: g.checkedAt, messagesThrough: g.messagesThrough }}

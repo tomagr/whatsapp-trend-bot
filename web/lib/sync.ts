@@ -7,6 +7,8 @@ export type GroupInfo = {
   checkedAt: string | null; messagesThrough: string | null;
   // The WhatsApp group photo in the group's state folder. Missing: leave the stored photo; null: clear it.
   photo?: { file: string; type: string; sha256: string } | null;
+  // Groups added from /admin: the page description Claude wrote (null until there are vendors; missing: leave it).
+  description?: string | null;
 };
 export type Photo = { data: Uint8Array<ArrayBuffer>; type: string; hash: string } | null;
 export type VendorDoc = {
@@ -47,6 +49,7 @@ function vendorFields(d: VendorDoc) {
 export async function upsertGroup(tx: Tx, g: GroupInfo, photo?: Photo) {
   const data = {
     name: g.name, lang: g.lang, vendorMode: g.vendorMode, checkedAt: g.checkedAt, messagesThrough: g.messagesThrough,
+    ...(g.description ? { description: g.description } : {}),
     ...(photo === undefined ? {} : photo ? { photo: photo.data, photoType: photo.type, photoHash: photo.hash } : { photo: null, photoType: null, photoHash: null }),
   };
   await tx.group.upsert({ where: { key: g.key }, create: { key: g.key, slug: g.key, ...data }, update: data });

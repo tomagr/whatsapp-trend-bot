@@ -5,6 +5,7 @@
   analyze       run the model on the latest prepared run
   merge         fold the latest analysis into state/
   export        write state/<key>/site.json (full snapshot per group)
+  describe      write the page description of groups added from /admin (Claude, one sentence)
   sync          copy the snapshots into the site's Postgres (web/scripts/sync.mts)
   summary       JSON summary of the latest run (--text: notification message; exit 2 if a group failed, 3 if the site was not updated)
   preflight     check that WhatsApp Web is linked (exit 3 if it needs a QR scan)
@@ -26,6 +27,7 @@ def main(argv):
             pipeline.analyze(run)
             pipeline.merge(run)
         pipeline.mark_checked(run)
+        pipeline.describe()  # page description for groups added from /admin
         print(json.dumps(load(run / "manifest.json", {}), ensure_ascii=False, indent=1))
         print("exported:", pipeline.export())
     elif cmd == "summary":
@@ -62,6 +64,8 @@ def main(argv):
         print(json.dumps(pipeline.analyze(argv[1] if len(argv) > 1 else None), ensure_ascii=False, indent=1))
     elif cmd == "merge":
         print(json.dumps(pipeline.merge(argv[1] if len(argv) > 1 else None), ensure_ascii=False, indent=1))
+    elif cmd == "describe":
+        print(json.dumps(pipeline.describe(), ensure_ascii=False, indent=1))
     elif cmd == "export":
         print(json.dumps(pipeline.export()))
     elif cmd == "sync":

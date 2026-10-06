@@ -18,3 +18,8 @@
 .g-moves { --bg: #eef2f1; --surface: #fbfdfc; --ink: #172221; --muted: #566563; --line: #d0dad8; --accent: #7a3e8f; --accent-ink: #f0f8f6; --signal: #c2410c; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .g-moves { --bg: #111817; --surface: #182120; --ink: #e2ecea; --muted: #93a5a2; --line: #2a3634; --accent: #d3a3e6; --accent-ink: #111817; --signal: #f28b52; } }
 :root[data-theme="dark"] .g-moves { --bg: #111817; --surface: #182120; --ink: #e2ecea; --muted: #93a5a2; --line: #2a3634; --accent: #d3a3e6; --accent-ink: #111817; --signal: #f28b52; }
+
+/* Groups added from /admin: one neutral palette; the accent comes inline (--accent-l / --accent-d, lib/groupStyle.ts). */
+.g-custom { --bg: #eff1f0; --surface: #fbfcfc; --ink: #18201e; --muted: #58635f; --line: #d3dad7; --accent: var(--accent-l); --accent-ink: #f6f8f7; --signal: #c2410c; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .g-custom { --bg: #121716; --surface: #19201e; --ink: #e3ebe8; --muted: #94a39e; --line: #2b3532; --accent: var(--accent-d); --accent-ink: #121716; --signal: #f28b52; } }
+:root[data-theme="dark"] .g-custom { --bg: #121716; --surface: #19201e; --ink: #e3ebe8; --muted: #94a39e; --line: #2b3532; --accent: var(--accent-d); --accent-ink: #121716; --signal: #f28b52; }

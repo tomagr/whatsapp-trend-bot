@@ -19,6 +19,18 @@ model Group {
   photo           Bytes?
   photoType       String?
   photoHash       String?
+  // Groups added from /admin carry their own config (the original five live in groups.json on the Mac).
+  // The poller writes these to state/groups-added.json for the pipeline; the page copy comes from a template.
+  addedAt         DateTime?
+  addedBy         String?
+  context         String?   // what the group is about, given to the model
+  description     String?   // one line for the home page and the page intro
+  vendorTypes     String[]  @default([])
+  scrubChildNames Boolean   @default(false)
+  color           String?   // a name from lib/groupStyle.ts ACCENTS
+  // Removed from /admin: hidden everywhere and skipped by the pipeline, data kept so it can be restored.
+  removedAt       DateTime?
+  removedBy       String?
   vendors         Vendor[]
   opportunities   Opportunity[]
   slugAliases     GroupSlugAlias[]
@@ -83,10 +95,18 @@ model UpdateRun {
   requestedBy String
   requestedAt DateTime  @default(now())
   groupKey    String? // null: every group
+  kind        String    @default("update") // update | list-chats
   status      String    @default("queued") // queued | running | done | review | failed | canceled
   startedAt   DateTime?
   finishedAt  DateTime?
   message     String    @default("")
 
   @@index([status, requestedAt])
+}
+
+// The WhatsApp groups the Mac can read, refreshed by a "list-chats" run for the "Add group" picker in /admin.
+model WaChatList {
+  id        String   @id @default("latest")
+  chats     Json     // [{ id, name, t }] newest activity first
+  fetchedAt DateTime
 }

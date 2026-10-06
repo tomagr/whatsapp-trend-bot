@@ -122,3 +122,10 @@ test("a photo file outside the group folder is never read", async () => {
   expect(out.failed[0]).toMatchObject({ key: "overland" });
   fs.rmSync(dir, { recursive: true, force: true });
 });
+
+test("a generated description is stored, and a snapshot without one keeps it", async () => {
+  await syncGroup(t.prisma, snap({ group: { ...snap().group, description: "Talleres y repuestos." } }));
+  await syncGroup(t.prisma, snap());
+  await syncGroup(t.prisma, snap({ group: { ...snap().group, description: null } }));
+  expect((await t.prisma.group.findUnique({ where: { key: "overland" } }))!.description).toBe("Talleres y repuestos.");
+});

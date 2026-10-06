@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
-import { COPY, GROUP_KEYS, T, type GroupKey } from "@/lib/groupCopy";
+import { copyFor, isBuiltIn, T, type GroupKey } from "@/lib/groupCopy";
+import { customPalette } from "@/lib/groupStyle";
 import { OG_SIZE, ogImage, stripEmoji } from "@/lib/ogImage";
 import { resolveSlug } from "@/lib/slugs";
 
@@ -19,9 +20,11 @@ const PALETTE: Record<GroupKey, { bg: string; ink: string; muted: string; line: 
 export default async function Image({ params }: { params: Promise<{ group: string }> }) {
   const { group: slug } = await params;
   const { group: g, redirectTo } = await resolveSlug(db(), slug);
-  const row = g ?? (redirectTo ? await db().group.findUnique({ where: { slug: redirectTo } }) : null);
-  const key = (GROUP_KEYS as string[]).includes(row?.key ?? "") ? (row!.key as GroupKey) : "overland";
-  const t = T[row?.lang === "en" ? "en" : "es"];
+  const row = g ?? (redirectTo ? await db().group.findUnique({ where: { slug: redirectTo }, omit: { photo: true } }) : null);
+  if (!row) return new Response("Not found", { status: 404 });
+  const key = row.key;
+  const t = T[row.lang === "en" ? "en" : "es"];
+  const copy = copyFor(row);
   const where = { groupKey: key, deletedAt: null };
   const [vendors, cats, pic] = await Promise.all([
     db().vendor.count({ where }),
@@ -30,10 +33,10 @@ export default async function Image({ params }: { params: Promise<{ group: strin
   ]);
   const photo = pic?.photo && pic.photoType ? `data:${pic.photoType};base64,${Buffer.from(pic.photo).toString("base64")}` : null;
   return ogImage({
-    palette: PALETTE[key],
+    palette: isBuiltIn(key) ? PALETTE[key as GroupKey] : customPalette(row.color),
     eyebrow: t.eyebrow + "Trend pages",
-    title: stripEmoji(COPY[key].eyebrowName),
-    subtitle: COPY[key].h1.join(""),
+    title: stripEmoji(copy.eyebrowName),
+    subtitle: copy.h1.join(""),
     photo,
     footer: [`${vendors} ${t.vendors}`, `${cats} ${t.cats}`, t === T.en ? "Updated every Monday" : "Se actualiza cada lunes"],
   });

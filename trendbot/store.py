@@ -21,12 +21,25 @@ HOME = Path(os.environ.get("TRENDBOT_HOME", ROOT))
 STATE = HOME / "state"
 RUNS = HOME / "runs"
 CONFIG = ROOT / "groups.json"
+ADDED = STATE / "groups-added.json"
+REMOVED = STATE / "groups-removed.json"  # keys removed in /admin, built-in ones included
 # Untracked {group_key: [names]} of children to scrub; kept out of git because the list itself is personal data.
 PRIVATE_NAMES = ROOT / "privacy.local.json"
 
 
+REQUIRED = ("key", "name", "lang", "vendor_mode", "context")
+
+
 def groups():
     cfgs = json.loads(CONFIG.read_text(encoding="utf-8"))
+    # Groups added from the site's /admin: the poller (web/scripts/poll-runs.mts) mirrors them here from the database.
+    # They follow the built-in ones and can never replace one.
+    known = {c["key"] for c in cfgs}
+    for c in load(ADDED, []):
+        if all(c.get(k) for k in REQUIRED) and c["key"] not in known:
+            cfgs.append(c); known.add(c["key"])
+    removed = set(load(REMOVED, []))
+    cfgs = [c for c in cfgs if c["key"] not in removed]
     # Fail closed: without the names file the scrubber would silently publish those names.
     if any(c.get("privacy", {}).get("scrub_child_names") for c in cfgs) and not PRIVATE_NAMES.exists():
         raise FileNotFoundError(f"{PRIVATE_NAMES.name} is missing; copy it from the main machine before running the pipeline")

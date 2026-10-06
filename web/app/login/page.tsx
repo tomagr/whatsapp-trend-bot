@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth, signIn } from "@/auth";
-import { GROUP_KEYS } from "@/lib/groupCopy";
 import SignInButton from "./SignInButton";
 import "./login.css";
 
@@ -26,7 +25,7 @@ export default async function Login({ searchParams }: Props) {
         <h1 id="login-title">Sign in to see every group</h1>
         <p className="login-lede">Group pages are public. Sign in with {domain ? <b>your @{domain} Google account</b> : "your Google account"} to also get:</p>
         <ul className="login-perks">
-          <li>The index of all {GROUP_KEYS.length} WhatsApp groups</li>
+          <li>The index of all the WhatsApp groups</li>
           <li>Business opportunities: what each group keeps asking for</li>
           <li>Who recommended each vendor</li>
           <li>The admin page that pulls in new messages</li>

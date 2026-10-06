@@ -12,6 +12,7 @@ class ExportTest(unittest.TestCase):
     def setUp(self):
         self.home = Path(tempfile.mkdtemp())
         shutil.copytree(ROOT / "state", self.home / "state")
+        (self.home / "state" / "groups-added.json").unlink(missing_ok=True)  # only the built-in groups here
         os.environ["TRENDBOT_HOME"] = str(self.home)
         import importlib, trendbot.store, trendbot.pipeline
         importlib.reload(trendbot.store)

@@ -13,9 +13,10 @@ export function slugError(slug: string): string | null {
 // Resolves a URL segment to its group, or to the slug it should redirect to.
 export async function resolveSlug(prisma: PrismaClient, slug: string) {
   const group = await prisma.group.findUnique({ where: { slug }, omit: { photo: true } }); // bytes only via /<slug>/photo
-  if (group) return { group };
-  const alias = await prisma.groupSlugAlias.findUnique({ where: { slug }, include: { group: { select: { slug: true } } } });
-  return alias ? { redirectTo: alias.group.slug } : {};
+  // A group removed in /admin is gone from the site: its page, old slugs, photo and preview all 404.
+  if (group) return group.removedAt ? {} : { group };
+  const alias = await prisma.groupSlugAlias.findUnique({ where: { slug }, include: { group: { select: { slug: true, removedAt: true } } } });
+  return alias && !alias.group.removedAt ? { redirectTo: alias.group.slug } : {};
 }
 
 export async function renameGroupSlug(prisma: PrismaClient, key: string, raw: string) {
