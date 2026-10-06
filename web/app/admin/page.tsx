@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import NavBar from "@/components/NavBar";
+import GroupUpdateButton from "@/components/GroupUpdateButton";
 import UpdatePanel from "@/components/UpdatePanel";
 import { db } from "@/lib/db";
+import { groupPhotoUrl } from "@/lib/groupPhoto";
 import { fmtLong } from "@/lib/filter";
 import { COPY, GROUP_KEYS, type GroupKey } from "@/lib/groupCopy";
 import { stripEmoji } from "@/lib/ogImage";
@@ -25,11 +28,12 @@ export default async function Admin() {
   const [active, runs, groups, counts] = await Promise.all([
     activeRun(prisma),
     recentRuns(prisma, 10),
-    prisma.group.findMany(),
+    prisma.group.findMany({ omit: { photo: true } }),
     prisma.vendor.groupBy({ by: ["groupKey"], where: { deletedAt: null }, _count: true }),
   ]);
   const byKey = new Map(groups.map((g) => [g.key, g]));
   const vendorCount = new Map(counts.map((c) => [c.groupKey, c._count]));
+  const groupName = (k: string | null) => !k ? "all groups" : (GROUP_KEYS as string[]).includes(k) ? stripEmoji(COPY[k as GroupKey].eyebrowName) : k;
   return (
     <div className="g-root g-index index admin">
       <div className="wrap">
@@ -37,12 +41,12 @@ export default async function Admin() {
         <header>
           <div className="eyebrow">Admin</div>
           <h1>Update <span>messages</span></h1>
-          <p className="lede">Reads the new messages from the five WhatsApp groups, analyses them and updates every page. It runs on its own every Monday at 09:00; use this to run it now.</p>
+          <p className="lede">Reads the new messages from the WhatsApp groups, analyses them and updates their pages. It runs for every group on its own every Monday at 09:00; run it now for all of them here, or for one group from the list below.</p>
         </header>
 
         <section>
           <UpdatePanel active={active && { id: active.id, status: active.status, requestedBy: active.requestedBy,
-            requestedAt: fmt(active.requestedAt), startedAt: active.startedAt ? fmt(active.startedAt) : null }} />
+            requestedAt: fmt(active.requestedAt), startedAt: active.startedAt ? fmt(active.startedAt) : null, scope: groupName(active.groupKey) }} />
         </section>
 
         <section>
@@ -53,6 +57,7 @@ export default async function Admin() {
                 <li key={r.id} className="run">
                   <span className={`run-status s-${r.status}`}>{r.status}</span>
                   <span className="run-when">{fmt(r.requestedAt)}</span>
+                  <span className="run-scope">{groupName(r.groupKey)}</span>
                   <span className="run-who">{r.requestedBy}</span>
                   {r.message && <span className="run-msg">{r.message}</span>}
                 </li>
@@ -67,12 +72,15 @@ export default async function Admin() {
             {GROUP_KEYS.map((k: GroupKey) => {
               const g = byKey.get(k);
               return (
-                <Link key={k} className="page" style={{ ["--c" as string]: `var(--g-${k})` }} href={`/${g?.slug ?? k}`}>
-                  <span className="swatch" aria-hidden="true" />
-                  <span className="name">{stripEmoji(COPY[k].eyebrowName)}</span>
-                  <span className="meta">{vendorCount.get(k) ?? 0} vendors · checked {g?.checkedAt ? fmtLong(g.checkedAt, "en-GB") : "—"} · messages through {g?.messagesThrough ?? "—"}</span>
-                  <span className="go">Open →</span>
-                </Link>
+                <div key={k} className="admin-group">
+                  <Link className="page" style={{ ["--c" as string]: `var(--g-${k})` }} href={`/${g?.slug ?? k}`}>
+                    {g?.photoHash ? <Image className="swatch photo" src={groupPhotoUrl(g.slug, g.photoHash)!} alt="" width={28} height={28} unoptimized /> : <span className="swatch" aria-hidden="true" />}
+                    <span className="name">{groupName(k)}</span>
+                    <span className="meta">{vendorCount.get(k) ?? 0} vendors · checked {g?.checkedAt ? fmtLong(g.checkedAt, "en-GB") : "—"} · messages through {g?.messagesThrough ?? "—"}</span>
+                    <span className="go">Open →</span>
+                  </Link>
+                  <GroupUpdateButton groupKey={k} name={groupName(k)} disabled={!!active} />
+                </div>
               );
             })}
           </div>

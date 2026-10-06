@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireUser, signOut } from "@/auth";
 import { db } from "@/lib/db";
+import { GROUP_KEYS } from "@/lib/groupCopy";
 import { renameGroupSlug } from "@/lib/slugs";
 import { cancelRun, requestRun } from "@/lib/updateRuns";
 import { createManualVendor, deleteManualVendor } from "@/lib/vendors";
@@ -41,10 +42,12 @@ export async function renameSlug(prev: SlugState, form: FormData): Promise<SlugS
 
 export type UpdateState = { status: "idle" | "ok" | "error"; message: string };
 
-// Queues an update for the Mac poller; the page then shows its progress.
-export async function requestUpdate(): Promise<UpdateState> {
+// Queues an update for the Mac poller; the page then shows its progress. A "groupKey" field limits it to one group.
+export async function requestUpdate(_prev: UpdateState, form: FormData): Promise<UpdateState> {
   const user = await requireUser();
-  const r = await requestRun(db(), user.email ?? "unknown");
+  const key = String(form.get("groupKey") ?? "");
+  if (key && !(GROUP_KEYS as string[]).includes(key)) return { status: "error", message: "Unknown group." };
+  const r = await requestRun(db(), user.email ?? "unknown", new Date(), key || null);
   revalidatePath("/admin");
   return r.ok ? { status: "ok", message: "Queued." } : { status: "error", message: "An update is already queued or running." };
 }

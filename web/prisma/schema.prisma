@@ -15,6 +15,10 @@ model Group {
   vendorMode      String
   checkedAt       String?
   messagesThrough String?
+  // WhatsApp group photo, downloaded by the weekly run (served at /<slug>/photo; the hash busts caches)
+  photo           Bytes?
+  photoType       String?
+  photoHash       String?
   vendors         Vendor[]
   opportunities   Opportunity[]
   slugAliases     GroupSlugAlias[]
@@ -78,6 +82,7 @@ model UpdateRun {
   id          String    @id @default(cuid())
   requestedBy String
   requestedAt DateTime  @default(now())
+  groupKey    String? // null: every group
   status      String    @default("queued") // queued | running | done | review | failed | canceled
   startedAt   DateTime?
   finishedAt  DateTime?

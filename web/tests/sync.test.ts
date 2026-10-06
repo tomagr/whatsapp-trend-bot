@@ -87,3 +87,38 @@ test("runSync continues past a broken group", async () => {
   expect(out.results.map((r) => r.key)).toEqual(["overland"]);
   expect(out.failed.map((f) => f.key)).toEqual(["moves"]);
 });
+
+test("runSync stores the group photo from the state folder and clears it when the snapshot drops it", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sync-photo-"));
+  fs.mkdirSync(path.join(dir, "overland"));
+  const bytes = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]);
+  fs.writeFileSync(path.join(dir, "overland", "photo.jpg"), bytes);
+  const write = (photo: unknown) => fs.writeFileSync(path.join(dir, "overland", "site.json"),
+    JSON.stringify({ ...snap(), group: { ...snap().group, ...(photo === undefined ? {} : { photo }) } }));
+
+  write({ file: "photo.jpg", type: "image/jpeg", sha256: "abc" });
+  await runSync(t.prisma, dir);
+  let g = await t.prisma.group.findUnique({ where: { key: "overland" } });
+  expect(Buffer.from(g!.photo!)).toEqual(bytes);
+  expect(g).toMatchObject({ photoType: "image/jpeg", photoHash: "abc" });
+
+  write(undefined); // older snapshots without the field leave the photo alone
+  await runSync(t.prisma, dir);
+  expect((await t.prisma.group.findUnique({ where: { key: "overland" } }))!.photoHash).toBe("abc");
+
+  write(null); // the group has no photo (or must not publish one): clear it
+  await runSync(t.prisma, dir);
+  g = await t.prisma.group.findUnique({ where: { key: "overland" } });
+  expect(g).toMatchObject({ photo: null, photoType: null, photoHash: null });
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test("a photo file outside the group folder is never read", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sync-photo-"));
+  fs.mkdirSync(path.join(dir, "overland"));
+  fs.writeFileSync(path.join(dir, "overland", "site.json"),
+    JSON.stringify({ ...snap(), group: { ...snap().group, photo: { file: "../secret.jpg", type: "image/jpeg", sha256: "x" } } }));
+  const out = await runSync(t.prisma, dir);
+  expect(out.failed[0]).toMatchObject({ key: "overland" });
+  fs.rmSync(dir, { recursive: true, force: true });
+});

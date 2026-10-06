@@ -34,6 +34,13 @@ def groups():
     for c in cfgs:
         if extra.get(c["key"]):
             c.setdefault("privacy", {})["extra_names"] = extra[c["key"]]
+    # TRENDBOT_ONLY=key[,key] runs every step for those groups only (an "Update" on one group in /admin).
+    only = {k.strip() for k in os.environ.get("TRENDBOT_ONLY", "").split(",") if k.strip()}
+    if only:
+        unknown = only - {c["key"] for c in cfgs}
+        if unknown:
+            raise ValueError(f"TRENDBOT_ONLY names unknown groups: {', '.join(sorted(unknown))}")
+        cfgs = [c for c in cfgs if c["key"] in only]
     return cfgs
 
 

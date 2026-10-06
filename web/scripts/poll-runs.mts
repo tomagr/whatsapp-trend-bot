@@ -14,6 +14,8 @@ config({ path: path.join(ROOT, ".env"), quiet: true });
 const APP = path.join(ROOT, "app", "WhatsApp Trend Bot.app");
 const RESULT = path.join(ROOT, "logs", "last-result.json");
 const LOCK = path.join(ROOT, "logs", "run.lock");
+// Read once by run_weekly.sh: which groups to run (an "Update" on one group). No file means every group.
+const REQUEST = path.join(ROOT, "logs", "run-request.json");
 
 // The Monday job is running: leave the request queued and take it once that finishes.
 if (fs.existsSync(LOCK)) process.exit(0);
@@ -22,10 +24,13 @@ const prisma = makePrisma();
 try {
   const run = await claimNext(prisma);
   if (run) {
-    console.log(`${new Date().toISOString()} running ${run.id} for ${run.requestedBy}`);
+    console.log(`${new Date().toISOString()} running ${run.id} (${run.groupKey ?? "all groups"}) for ${run.requestedBy}`);
     const started = Date.now();
+    fs.rmSync(REQUEST, { force: true });
+    if (run.groupKey) fs.writeFileSync(REQUEST, JSON.stringify({ groups: [run.groupKey], at: started / 1000 }));
     // -W waits for the app, which waits for run_weekly.sh; the script's own limits end it well before this one.
     const res = spawnSync("/usr/bin/open", ["-W", "-g", APP], { timeout: 2 * 60 * 60 * 1000 });
+    fs.rmSync(REQUEST, { force: true }); // in case the script never got to read it
     let status: "done" | "review" | "failed" = "failed";
     let message = res.error ? `Could not start the update: ${res.error.message}` : "The update did not report a result; see logs/ on the Mac.";
     try {

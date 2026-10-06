@@ -2,6 +2,7 @@
 
 // Group page as a guide: search, the most recommended vendors and category tiles up front, then the full directory.
 // Opportunities live in a second tab that only signed-in users see.
+import Image from "next/image";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition } from "react";
 import { deleteVendor } from "@/app/actions";
 import VendorRow, { type Vendor } from "@/components/VendorRow";
@@ -11,7 +12,7 @@ import { COPY, T, type GroupKey } from "@/lib/groupCopy";
 type Opp = { key: string; rank: number; title: string; summary: string; offer: string; alternatives: string; gap: string;
   signals: number; people: number; firstDate: string; lastDate: string; quotes: { date?: string; who?: string; text?: string }[] };
 type Props = { userBar?: React.ReactNode; signedIn: boolean; groupKey: GroupKey; lang: "es" | "en"; mode: "sentiment" | "type";
-  status: { checkedAt: string | null; messagesThrough: string | null }; vendors: Vendor[]; opportunities: Opp[] };
+  status: { checkedAt: string | null; messagesThrough: string | null }; photoUrl?: string | null; vendors: Vendor[]; opportunities: Opp[] };
 
 
 // "#oportunidades" / "#opportunities" in the URL opens the second tab, as on the original pages.
@@ -19,7 +20,7 @@ const subscribeHash = (cb: () => void) => { window.addEventListener("hashchange"
 const hashWantsOpps = () => /oportunidades|opportunities/.test(window.location.hash);
 const TILES = 10; // two rows of five on desktop, five rows of two on a phone
 
-export default function GroupView({ userBar, signedIn, groupKey, lang, mode, status, vendors, opportunities }: Props) {
+export default function GroupView({ userBar, signedIn, groupKey, lang, mode, status, photoUrl, vendors, opportunities }: Props) {
   const t = T[lang];
   const c = COPY[groupKey];
   const [tabChoice, setTab] = useState<"vendors" | "opps" | null>(null);
@@ -84,7 +85,10 @@ export default function GroupView({ userBar, signedIn, groupKey, lang, mode, sta
       <div className="wrap">
         {userBar}
         <header className="top">
-          <div className="eyebrow">{t.eyebrow}{c.eyebrowName}</div>
+          <div className="eyebrow-row">
+            {photoUrl && <Image className="group-photo" src={photoUrl} alt="" width={56} height={56} loading="eager" unoptimized />}
+            <div className="eyebrow">{t.eyebrow}{c.eyebrowName}</div>
+          </div>
           <h1>{c.h1[0]}<span>{c.h1[1]}</span></h1>
           <p className="lede">{c.lede}</p>
           <p className="stats">

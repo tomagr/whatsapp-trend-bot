@@ -56,6 +56,23 @@ test("requests queued while a run was starting share its outcome", async () => {
   expect(await t.prisma.updateRun.findUnique({ where: { id: late.id } })).toMatchObject({ status: "queued" });
 });
 
+test("a request can name one group, and it blocks other requests while active", async () => {
+  const { run } = await requestRun(t.prisma, "a@x.co", at(0), "members");
+  expect(run.groupKey).toBe("members");
+  expect((await requestRun(t.prisma, "b@x.co", at(1))).ok).toBe(false);
+  expect((await claimNext(t.prisma, at(2)))?.groupKey).toBe("members");
+});
+
+test("a single-group run only covers queued requests for that same group", async () => {
+  const { run } = await requestRun(t.prisma, "a@x.co", at(0), "members");
+  await claimNext(t.prisma, at(5));
+  const sameGroup = await t.prisma.updateRun.create({ data: { requestedBy: "b@x.co", requestedAt: at(4), groupKey: "members" } });
+  const allGroups = await t.prisma.updateRun.create({ data: { requestedBy: "c@x.co", requestedAt: at(4) } });
+  await finishRun(t.prisma, run.id, "done", "members: 3 msgs", at(20));
+  expect(await t.prisma.updateRun.findUnique({ where: { id: sameGroup.id } })).toMatchObject({ status: "done" });
+  expect(await t.prisma.updateRun.findUnique({ where: { id: allGroups.id } })).toMatchObject({ status: "queued" });
+});
+
 test("maps the weekly script's exit codes", () => {
   expect([0, 2, 3, 1, 142].map(statusFromCode)).toEqual(["done", "review", "failed", "failed", "failed"]);
 });

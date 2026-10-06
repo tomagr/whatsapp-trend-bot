@@ -9,16 +9,17 @@ export type RunStatus = "queued" | "running" | "done" | "review" | "failed" | "c
 const isStale = (r: { status: string; startedAt: Date | null }, now: Date) =>
   r.status === "running" && !!r.startedAt && now.getTime() - r.startedAt.getTime() > STALE_MS;
 
-// The queued or running request, if any. Only one at a time: the script reads every group in one go.
+// The queued or running request, if any. Only one at a time, even for single groups: each run opens WhatsApp Web.
 export async function activeRun(prisma: PrismaClient, now = new Date()) {
   const r = await prisma.updateRun.findFirst({ where: { status: { in: ["queued", "running"] } }, orderBy: { requestedAt: "desc" } });
   return r && !isStale(r, now) ? r : null;
 }
 
-export async function requestRun(prisma: PrismaClient, email: string, now = new Date()) {
+// groupKey limits the run to one group; null runs every group, like the Monday job.
+export async function requestRun(prisma: PrismaClient, email: string, now = new Date(), groupKey: string | null = null) {
   const active = await activeRun(prisma, now);
   if (active) return { ok: false as const, run: active };
-  return { ok: true as const, run: await prisma.updateRun.create({ data: { requestedBy: email, requestedAt: now } }) };
+  return { ok: true as const, run: await prisma.updateRun.create({ data: { requestedBy: email, requestedAt: now, groupKey } }) };
 }
 
 // Only a request the Mac has not picked up yet can be canceled.
@@ -40,11 +41,12 @@ export async function claimNext(prisma: PrismaClient, now = new Date()) {
   return count === 1 ? { ...next, status: "running", startedAt: now } : null;
 }
 
-// Requests queued while this one was starting are covered by it, so they get the same outcome.
+// Requests queued while this one was starting are covered by it, so they get the same outcome:
+// a full run covers any of them, a single-group run only those for its group.
 export async function finishRun(prisma: PrismaClient, id: string, status: Exclude<RunStatus, "queued" | "running" | "canceled">, message: string, now = new Date()) {
   const run = await prisma.updateRun.update({ where: { id }, data: { status, message, finishedAt: now } });
   await prisma.updateRun.updateMany({
-    where: { status: "queued", requestedAt: { lte: run.startedAt ?? now } },
+    where: { status: "queued", requestedAt: { lte: run.startedAt ?? now }, ...(run.groupKey ? { groupKey: run.groupKey } : {}) },
     data: { status, message, startedAt: run.startedAt, finishedAt: now },
   });
   return run;

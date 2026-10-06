@@ -1,4 +1,6 @@
 """Weekly pipeline steps. Each step reads/writes files so a failed step can be re-run on its own."""
+import base64
+import hashlib
 import json
 import re
 import shutil
@@ -58,6 +60,7 @@ def prepare():
         if isinstance(result, Exception):
             manifest["groups"][key] = {"status": "fetch-failed", "error": str(result)[:500]}
             continue
+        save_photo(cfg, result[0])  # even without new messages: the photo may have changed
         since = _cursor_epoch(cursor)
         msgs = [m for m in result[1] if _is_new(m, cursor, since)]
         if not msgs:
@@ -82,6 +85,38 @@ def prepare():
                                     "last_ids": [m["id"] for m in msgs if m["ts"] == last]}
     save(run / "manifest.json", manifest)
     return run, manifest
+
+
+PHOTO_EXT = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
+
+
+def photo_allowed(cfg):
+    # Groups whose pages scrub children's names keep their photo off the public page unless the config says otherwise.
+    privacy = cfg.get("privacy", {})
+    return privacy.get("publish_photo", not privacy.get("scrub_child_names", False))
+
+
+def save_photo(cfg, chat):
+    """Store the group photo that wa/export.mjs downloaded: state/<key>/photo.<ext> + photo.json.
+
+    chat["photo"] is {"type", "data" (base64)}, None when the group has no photo, or missing when it could not be read
+    (then the last photo stays)."""
+    gdir = group_dir(cfg["key"])
+    clear = lambda: [f.unlink() for f in gdir.glob("photo.*")]
+    if not photo_allowed(cfg):
+        clear(); return
+    if "photo" not in chat:
+        return
+    photo = chat["photo"]
+    if photo is None:
+        clear(); return
+    ext = PHOTO_EXT.get(photo.get("type"))
+    if not ext:
+        return
+    data = base64.b64decode(photo["data"])
+    clear()
+    (gdir / f"photo.{ext}").write_bytes(data)
+    save(gdir / "photo.json", {"file": f"photo.{ext}", "type": photo["type"], "sha256": hashlib.sha256(data).hexdigest()})
 
 
 # ---- 2. analyze: one headless Claude Code call per group, new messages only ----
@@ -204,7 +239,8 @@ def export():
         meta = docs.pop("meta/status", None) or {}
         snap = {
             "group": {"key": cfg["key"], "name": cfg["name"], "lang": cfg["lang"], "vendorMode": cfg["vendor_mode"],
-                      "checkedAt": meta.get("checkedAt"), "messagesThrough": meta.get("messagesThrough")},
+                      "checkedAt": meta.get("checkedAt"), "messagesThrough": meta.get("messagesThrough"),
+                      "photo": load(group_dir(cfg["key"]) / "photo.json", None) if photo_allowed(cfg) else None},
             "vendors": {p.split("/", 1)[1]: d for p, d in docs.items() if p.startswith("vendors/")},
             "opportunities": {p.split("/", 1)[1]: d for p, d in docs.items() if p.startswith("opportunities/")},
         }

@@ -23,15 +23,18 @@ export default async function Image({ params }: { params: Promise<{ group: strin
   const key = (GROUP_KEYS as string[]).includes(row?.key ?? "") ? (row!.key as GroupKey) : "overland";
   const t = T[row?.lang === "en" ? "en" : "es"];
   const where = { groupKey: key, deletedAt: null };
-  const [vendors, cats] = await Promise.all([
+  const [vendors, cats, pic] = await Promise.all([
     db().vendor.count({ where }),
     db().vendor.groupBy({ by: ["category"], where }).then((r) => r.length),
+    db().group.findUnique({ where: { key }, select: { photo: true, photoType: true } }),
   ]);
+  const photo = pic?.photo && pic.photoType ? `data:${pic.photoType};base64,${Buffer.from(pic.photo).toString("base64")}` : null;
   return ogImage({
     palette: PALETTE[key],
     eyebrow: t.eyebrow + "Trend pages",
     title: stripEmoji(COPY[key].eyebrowName),
     subtitle: COPY[key].h1.join(""),
+    photo,
     footer: [`${vendors} ${t.vendors}`, `${cats} ${t.cats}`, t === T.en ? "Updated every Monday" : "Se actualiza cada lunes"],
   });
 }

@@ -3,6 +3,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { auth } from "@/auth";
 import GroupView from "@/components/GroupView";
 import NavBar from "@/components/NavBar";
+import { groupPhotoUrl } from "@/lib/groupPhoto";
 import { db } from "@/lib/db";
 import { COPY, GROUP_KEYS, type GroupKey } from "@/lib/groupCopy";
 import { resolveSlug } from "@/lib/slugs";
@@ -54,6 +55,7 @@ export default async function GroupPage({ params }: Props) {
       lang={g.lang === "en" ? "en" : "es"}
       mode={g.vendorMode === "type" ? "type" : "sentiment"}
       status={{ checkedAt: g.checkedAt, messagesThrough: g.messagesThrough }}
+      photoUrl={groupPhotoUrl(g.slug, g.photoHash)}
       // Who recommended a vendor is a group member's name: blank it server-side so it never reaches a logged-out browser.
       vendors={user ? vendors : vendors.map((v) => ({ ...v, recommendedBy: "" }))}
       opportunities={opportunities.map((o) => ({ ...o, quotes: (o.quotes as { date?: string; who?: string; text?: string }[]) ?? [] }))}

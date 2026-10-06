@@ -2,9 +2,10 @@
 //
 //   node export.mjs login    opens a visible WhatsApp Web window; scan the QR with the phone once
 //   node export.mjs check    exit 0 when the saved login works, 3 when WhatsApp Web needs a QR scan
-//   node export.mjs export   stdin {"groups": [{"name", "since"}]} -> stdout {"groups": {name: {chat, messages} | {error}}}
+//   node export.mjs export   stdin {"groups": [{"name", "since"}]} -> stdout {"groups": {name: {chat, messages, photo?} | {error}}}
 //
-// `since` is a unix timestamp; messages at or after it are returned. Progress goes to stderr.
+// `since` is a unix timestamp; messages at or after it are returned. `photo` is the group photo ({type, data: base64}),
+// null when the group has none, and missing when it could not be read. Progress goes to stderr.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -87,6 +88,29 @@ function findGroup(groups, name) {
   if (!hits.length) throw new Error(`no group found matching ${JSON.stringify(name)}`);
   if (hits.length > 1) throw new Error(`several groups match ${JSON.stringify(name)}: ${hits.map((c) => c.name).join(', ')}`);
   return hits[0];
+}
+
+// Runs inside WhatsApp Web: the group photo's URL, from memory or asked from the server. null when the group has
+// no photo. (client.getProfilePicUrl() fails for groups with the current WhatsApp Web.)
+async function photoUrl(chatId) {
+  const thumbs = window.require('WAWebCollections').ProfilePicThumb;
+  const cached = thumbs.get(chatId)?.eurl;
+  if (cached) return cached;
+  const thumb = await thumbs.find(window.require('WAWebWidFactory').createWid(chatId));
+  return thumb?.eurl || null;
+}
+
+// The photo URL is signed and expires, so the image itself is downloaded now and handed to the pipeline.
+async function readPhoto(client, chatId) {
+  const url = await client.pupPage.evaluate(photoUrl, chatId);
+  if (!url) return null;
+  const res = await fetch(url, { signal: AbortSignal.timeout(20_000) });
+  if (!res.ok) throw new Error(`download failed: ${res.status}`);
+  const type = (res.headers.get('content-type') || '').split(';')[0].trim();
+  const data = Buffer.from(await res.arrayBuffer());
+  if (!/^image\/(jpeg|png|webp)$/.test(type)) throw new Error(`unexpected type ${type}`);
+  if (data.length > 2_000_000) throw new Error(`too large (${data.length} bytes)`);
+  return { type, data: data.toString('base64') };
 }
 
 // Runs inside WhatsApp Web: page back through the chat until `since`, then serialize what we need.
@@ -174,6 +198,11 @@ async function main() {
             chat,
             messages,
           };
+          try {
+            out.groups[name].photo = await readPhoto(client, chat.id);
+          } catch (e) {
+            log(`${chat.name}: photo not read (${e.message || e}); keeping the last one`);
+          }
           log(`${chat.name}: ${messages.length} new of ${stats.loaded} loaded (${stats.initial} in memory, ${stats.pages} pages, ${stats.range?.join(' → ') || 'none'})`);
         } catch (e) {
           out.groups[name] = { error: String(e.message || e) };

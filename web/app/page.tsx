@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { groupPhotoUrl } from "@/lib/groupPhoto";
 import { COPY, GROUP_KEYS } from "@/lib/groupCopy";
 import { fmtLong } from "@/lib/filter";
 import SlugEditor from "@/components/SlugEditor";
@@ -16,9 +18,10 @@ export default async function Index() {
   const user = (await auth())?.user;
   // The index is for signed-in users only; group pages stay public.
   if (!user) redirect("/login");
-  const rows = await db().group.findMany();
+  const rows = await db().group.findMany({ omit: { photo: true } });
   const checked = new Map(rows.map((g) => [g.key, g.checkedAt]));
   const slugs = new Map(rows.map((g) => [g.key, g.slug]));
+  const photos = new Map(rows.map((g) => [g.key, groupPhotoUrl(g.slug, g.photoHash)]));
   const sections = ["Communities", "Fitness & health tech"] as const;
   return (
     <div className="g-root g-index index">
@@ -37,7 +40,7 @@ export default async function Index() {
               {GROUP_KEYS.filter((k) => COPY[k].community === s).map((k) => (
                 <div key={k} className="row-wrap">
                   <Link className="page" style={{ ["--c" as string]: `var(--g-${k})` }} href={`/${slugs.get(k) ?? k}`}>
-                    <span className="swatch" aria-hidden="true" />
+                    {photos.get(k) ? <Image className="swatch photo" src={photos.get(k)!} alt="" width={28} height={28} unoptimized /> : <span className="swatch" aria-hidden="true" />}
                     <span className="name">{COPY[k].eyebrowName}</span>
                     <span className="meta">{COPY[k].indexMeta}{checked.get(k) ? ` · checked ${fmtLong(checked.get(k), "en-GB")}` : ""}</span>
                     <span className="desc">{COPY[k].indexDesc}</span>

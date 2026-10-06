@@ -31,20 +31,36 @@ record() {  # record CODE "message"
 }
 
 # One run at a time: the Monday job and an "Update now" from /admin must not read WhatsApp Web together.
+# A run that finds the lock waits for it (up to 90 min), so Monday's job is not lost behind a manual run.
 # A lock older than 3 h is left over from a crash (every step has a time limit), so it is taken over.
 LOCK=logs/run.lock
-if ! mkdir "$LOCK" 2>/dev/null; then
+waited=0
+until mkdir "$LOCK" 2>/dev/null; do
   if [[ -n $(find "$LOCK" -maxdepth 0 -mmin +180 2>/dev/null) ]]; then
-    rmdir "$LOCK" && mkdir "$LOCK" || exit 1
-  else
-    echo "== $(date): another update is already running; skipped" >> "$LOG"
+    rmdir "$LOCK" 2>/dev/null
+  elif (( waited >= 5400 )); then
+    echo "== $(date): another update kept running; skipped" >> "$LOG"
     record 4 "Ya había otra actualización en curso"
     exit 0
+  else
+    sleep 30; (( waited += 30 ))
   fi
-fi
+done
 trap 'rmdir "$LOCK" 2>/dev/null' EXIT
 
 echo "== $(date)" >> "$LOG"
+
+# "Update" on one group in /admin: the poller leaves the group keys in logs/run-request.json just before
+# starting this script. Taken once and only if fresh, so a leftover file never narrows the Monday run.
+REQ=logs/run-request.json
+if [[ -f $REQ ]]; then
+  ONLY=$($PY -c 'import json, sys, time; r = json.load(open(sys.argv[1])); print(",".join(r["groups"]) if time.time() - r["at"] < 900 else "")' "$REQ" 2>>"$LOG")
+  rm -f "$REQ"
+  if [[ -n $ONLY ]]; then
+    export TRENDBOT_ONLY=$ONLY
+    echo "== only: $ONLY" >> "$LOG"
+  fi
+fi
 
 # 1. Is WhatsApp Web linked? (headless Chrome with the saved login in .wa-session/)
 with_timeout 300 $PY -m trendbot preflight >> "$LOG" 2>&1
