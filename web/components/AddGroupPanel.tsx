@@ -88,6 +88,9 @@ export default function AddGroupPanel({ offer, pending, failed }: Props) {
               <option value="type">Members recommend companies or introduce their own</option>
             </select>
           </label>
+          <fieldset>
+            <label><input type="checkbox" name="scrubChildNames" defaultChecked /> The chat mentions children (their names are removed and the group photo is not published)</label>
+          </fieldset>
           <p className="add-note">Claude writes the page description after the first update. Logged-out visitors never see who recommended a vendor.</p>
           {state.status === "error" && <p className="update-error" role="alert">{state.message}</p>}
           <button className="primary" type="submit" disabled={adding}>{adding ? "Adding…" : "Add group and run its first update"}</button>

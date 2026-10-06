@@ -29,9 +29,9 @@ export async function newGroupKey(prisma: PrismaClient, name: string) {
   }
 }
 
-// The page description is written by Claude after the first run (trendbot describe); children's names are never
-// shown to logged-out visitors anyway, since who recommended a vendor is blanked for them.
-export type NewGroup = { name: string; lang: string; context: string; vendorMode: string };
+// The page description is written by Claude after the first run (trendbot describe). scrubChildNames removes
+// children's names from the page and keeps the group photo off it (trendbot's photo_allowed).
+export type NewGroup = { name: string; lang: string; context: string; vendorMode: string; scrubChildNames: boolean };
 
 export function newGroupError(g: NewGroup): string | null {
   if (!g.name.trim()) return "Pick a WhatsApp group.";
@@ -50,7 +50,7 @@ export async function addGroup(prisma: PrismaClient, g: NewGroup, email: string,
   const existing = await prisma.group.findFirst({ where: { name: g.name }, omit: { photo: true } });
   if (existing && !existing.removedAt) return { ok: false as const, error: "That group is already on the platform." };
   const config = {
-    lang: g.lang, vendorMode: g.vendorMode, context: g.context.trim(),
+    lang: g.lang, vendorMode: g.vendorMode, context: g.context.trim(), scrubChildNames: g.scrubChildNames,
     vendorTypes: g.vendorMode === "type" ? ["recommendation", "self-promotion"] : [],
   };
   let group;
