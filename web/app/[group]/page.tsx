@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Figtree } from "next/font/google";
 import { notFound, permanentRedirect } from "next/navigation";
 import { auth } from "@/auth";
 import GroupView from "@/components/GroupView";
@@ -12,10 +11,6 @@ import { SITE_NAME } from "@/lib/site";
 export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ group: string }> };
-
-// The group page's own type pair; .g-root swaps them in for the site-wide display and body fonts.
-const guideDisplay = Bricolage_Grotesque({ subsets: ["latin"], weight: ["600", "800"], variable: "--ff-guide-display" });
-const guideBody = Figtree({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--ff-guide-body" });
 
 const isKey = (k: string): k is GroupKey => (GROUP_KEYS as string[]).includes(k);
 
@@ -52,18 +47,16 @@ export default async function GroupPage({ params }: Props) {
     user ? db().opportunity.findMany({ where: { groupKey: group }, orderBy: { rank: "asc" } }) : Promise.resolve([]),
   ]);
   return (
-    <div className={`${guideDisplay.variable} ${guideBody.variable}`}>
-      <GroupView
-        userBar={<NavBar user={user} signOutTo={`/${g.slug}`} />}
-        signedIn={!!user}
-        groupKey={group}
-        lang={g.lang === "en" ? "en" : "es"}
-        mode={g.vendorMode === "type" ? "type" : "sentiment"}
-        status={{ checkedAt: g.checkedAt, messagesThrough: g.messagesThrough }}
-        // Who recommended a vendor is a group member's name: blank it server-side so it never reaches a logged-out browser.
-        vendors={user ? vendors : vendors.map((v) => ({ ...v, recommendedBy: "" }))}
-        opportunities={opportunities.map((o) => ({ ...o, quotes: (o.quotes as { date?: string; who?: string; text?: string }[]) ?? [] }))}
-      />
-    </div>
+    <GroupView
+      userBar={<NavBar user={user} signOutTo={`/${g.slug}`} />}
+      signedIn={!!user}
+      groupKey={group}
+      lang={g.lang === "en" ? "en" : "es"}
+      mode={g.vendorMode === "type" ? "type" : "sentiment"}
+      status={{ checkedAt: g.checkedAt, messagesThrough: g.messagesThrough }}
+      // Who recommended a vendor is a group member's name: blank it server-side so it never reaches a logged-out browser.
+      vendors={user ? vendors : vendors.map((v) => ({ ...v, recommendedBy: "" }))}
+      opportunities={opportunities.map((o) => ({ ...o, quotes: (o.quotes as { date?: string; who?: string; text?: string }[]) ?? [] }))}
+    />
   );
 }

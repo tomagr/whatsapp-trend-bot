@@ -1,0 +1,23 @@
+/* Sign-in page: one centred card in the group pages' guide style. Colour tokens come from .g-index. */
+.login-page {
+  min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; font-size: 15.5px;
+}
+.login-card { width: 100%; max-width: 440px; display: grid; gap: 20px; padding: 32px; border: 1px solid var(--line); border-radius: 24px; background: var(--surface); }
+.login-brand { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 18px; letter-spacing: -.01em; }
+.login-brand span { color: var(--signal); }
+.login-page h1 { margin: 0; font-size: clamp(30px, 7vw, 38px); line-height: 1.02; letter-spacing: -.03em; text-transform: none; }
+.login-lede { margin: 0; color: var(--muted); }
+.login-lede b { color: var(--ink); font-weight: 600; }
+.login-perks { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.login-perks li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; }
+.login-perks li::before { content: ""; width: 18px; height: 18px; margin-top: 2px; background: var(--signal);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / contain no-repeat; }
+.login-error { margin: 0; padding: 10px 14px; border-radius: 12px; background: var(--neg-bg); color: var(--neg); font-size: 14px; }
+.login-page form { margin: 0; }
+.signin-btn { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; min-height: 52px; padding: 0 20px; border: 1px solid var(--ink); border-radius: 999px; background: var(--ink); color: var(--bg); font-size: 16px; font-weight: 600; }
+.signin-btn:disabled { opacity: .7; cursor: progress; }
+.signin-g { width: 18px; height: 18px; padding: 3px; border-radius: 50%; background: #fff; flex: none; }
+@media (max-width: 480px) {
+  .login-page { place-items: start center; padding-top: 40px; }
+  .login-card { padding: 24px 20px; }
+}
