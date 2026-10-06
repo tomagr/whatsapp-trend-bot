@@ -210,6 +210,7 @@ footer { margin-top: 40px; font-size: 12.5px; color: var(--muted); max-width: 75
 }
 .admin-group { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; border-bottom: 1px solid var(--line); }
 .admin .admin-group a.page { border-bottom: 0; }
+.admin .admin-group .slug-edit { grid-column: 1 / -1; margin-top: -8px; padding: 0 6px 14px 50px; }
 .group-update { display: flex; align-items: center; gap: 8px; margin: 0; padding-right: 4px; }
 .group-update button { min-height: 36px; padding: 6px 14px; font-size: 13px; font-weight: 600; }
 .group-update button:disabled { opacity: .45; cursor: not-allowed; }

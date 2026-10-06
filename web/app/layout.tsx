@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Bricolage_Grotesque, Figtree, IBM_Plex_Mono } from "next/font/google";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
@@ -20,6 +20,9 @@ export const metadata: Metadata = {
   openGraph: { type: "website", siteName: SITE_NAME, title: "WhatsApp Trend Pages", description, url: "/", locale: "en_GB" },
   twitter: { card: "summary_large_image", title: "WhatsApp Trend Pages", description },
 };
+
+// Browser and installed-app chrome match the icon's background.
+export const viewport: Viewport = { themeColor: "#1b201c" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

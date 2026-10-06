@@ -15,7 +15,7 @@
     "artifact": "https://claude.ai/artifact/MRCbPhao71eB8RVxYThEu2",
     "vendor_mode": "sentiment",
     "context": "Argentine parents' group for a school class in Vicente López / Munro / Florida (birthdays, gift collections, uniforms, supplies, camps, clubs, outings).",
-    "privacy": {"scrub_child_names": true}
+    "privacy": {"scrub_child_names": true, "publish_photo": true}
   },
   {
     "key": "members",

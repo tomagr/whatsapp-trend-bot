@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import NavBar from "@/components/NavBar";
 import GroupUpdateButton from "@/components/GroupUpdateButton";
+import SlugEditor from "@/components/SlugEditor";
 import UpdatePanel from "@/components/UpdatePanel";
 import { db } from "@/lib/db";
 import { groupPhotoUrl } from "@/lib/groupPhoto";
@@ -80,6 +81,7 @@ export default async function Admin() {
                     <span className="go">Open →</span>
                   </Link>
                   <GroupUpdateButton groupKey={k} name={groupName(k)} disabled={!!active} />
+                  {g && <SlugEditor groupKey={k} slug={g.slug} />}
                 </div>
               );
             })}

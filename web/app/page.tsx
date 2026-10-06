@@ -7,7 +7,6 @@ import { db } from "@/lib/db";
 import { groupPhotoUrl } from "@/lib/groupPhoto";
 import { COPY, GROUP_KEYS } from "@/lib/groupCopy";
 import { fmtLong } from "@/lib/filter";
-import SlugEditor from "@/components/SlugEditor";
 import NavBar from "@/components/NavBar";
 
 export const dynamic = "force-dynamic";
@@ -46,7 +45,6 @@ export default async function Index() {
                     <span className="desc">{COPY[k].indexDesc}</span>
                     <span className="go">Open →</span>
                   </Link>
-                  {slugs.has(k) && <SlugEditor groupKey={k} slug={slugs.get(k)!} />}
                 </div>
               ))}
             </div>
