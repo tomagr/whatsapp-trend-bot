@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
@@ -8,6 +9,8 @@ import SlugEditor from "@/components/SlugEditor";
 import UserBar from "@/components/UserBar";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function Index() {
   const user = (await auth())?.user;

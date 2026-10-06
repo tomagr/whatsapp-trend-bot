@@ -6,6 +6,7 @@ import UserBar from "@/components/UserBar";
 import { db } from "@/lib/db";
 import { COPY, GROUP_KEYS, type GroupKey } from "@/lib/groupCopy";
 import { resolveSlug } from "@/lib/slugs";
+import { SITE_NAME } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,17 @@ const isKey = (k: string): k is GroupKey => (GROUP_KEYS as string[]).includes(k)
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { group: slug } = await params;
   const { group: g } = await resolveSlug(db(), slug);
-  return { title: g && isKey(g.key) ? COPY[g.key].title : "Not found" };
+  if (!g || !isKey(g.key)) return { title: "Not found", robots: { index: false } };
+  const { title, lede } = COPY[g.key];
+  const url = `/${g.slug}`;
+  return {
+    title,
+    description: lede,
+    alternates: { canonical: url },
+    openGraph: { type: "website", siteName: SITE_NAME, title, description: lede, url, locale: g.lang === "en" ? "en_GB" : "es_AR" },
+    // og:image comes from ./opengraph-image.tsx.
+    twitter: { card: "summary_large_image", title, description: lede },
+  };
 }
 
 export default async function GroupPage({ params }: Props) {

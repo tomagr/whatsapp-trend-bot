@@ -6,8 +6,8 @@ import type { NextConfig } from "next";
 config({ path: path.join(process.cwd(), "..", ".env"), quiet: true });
 
 const nextConfig: NextConfig = {
-  // The CA bundle is read at runtime; make sure Vercel ships it with every function.
-  outputFileTracingIncludes: { "/**": ["./certs/**"] },
+  // The CA bundle and the OG image fonts are read at runtime; make sure Vercel ships them with every function.
+  outputFileTracingIncludes: { "/**": ["./certs/**", "./assets/fonts/**"] },
 };
 
 export default nextConfig;

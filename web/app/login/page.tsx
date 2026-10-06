@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth, signIn } from "@/auth";
+
+export const metadata: Metadata = { title: "Sign in · WhatsApp Trend Pages", robots: { index: false, follow: false } };
 
 type Props = { searchParams: Promise<{ error?: string }> };
 
