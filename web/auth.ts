@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import { isAllowedEmail } from "@/lib/allowedEmail";
+import { authEnabled, OPEN_USER } from "@/lib/authMode";
 import { db } from "@/lib/db";
 import { recordSignIn } from "@/lib/users";
 
@@ -20,9 +21,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
 });
 
+// The signed-in user, or everyone's shared user in open mode (no Google settings; see lib/authMode.ts).
+export async function currentUser() {
+  if (!authEnabled()) return OPEN_USER;
+  return (await auth())?.user;
+}
+
 export async function requireUser() {
-  const session = await auth();
-  if (!session?.user) throw new Error("Unauthorized");
-  return session.user;
+  const user = await currentUser();
+  if (!user) throw new Error("Unauthorized");
+  return user;
 }
 

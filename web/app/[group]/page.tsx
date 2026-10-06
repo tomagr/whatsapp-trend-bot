@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
-import { auth } from "@/auth";
+import { currentUser } from "@/auth";
 import GroupView from "@/components/GroupView";
 import NavBar from "@/components/NavBar";
 import { groupPhotoUrl } from "@/lib/groupPhoto";
@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function GroupPage({ params }: Props) {
   const { group: slug } = await params;
-  const user = (await auth())?.user;
+  const user = await currentUser();
   const { group: g, redirectTo } = await resolveSlug(db(), slug);
   if (redirectTo) permanentRedirect(`/${redirectTo}`);
   if (!g) notFound();

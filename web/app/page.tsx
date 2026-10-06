@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { currentUser } from "@/auth";
 import { db } from "@/lib/db";
 import { groupPhotoUrl } from "@/lib/groupPhoto";
 import { ADDED_SECTION, copyFor } from "@/lib/groupCopy";
@@ -16,8 +16,8 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function Index() {
-  const user = (await auth())?.user;
-  // The index is for signed-in users only; group pages stay public.
+  const user = await currentUser();
+  // The index is for signed-in users only (everyone in open mode); group pages stay public.
   if (!user) redirect("/login");
   const rows = (await orderedGroups(db())).map((g) => ({ ...g, copy: copyFor(g) }));
   // Built-in sections first, then the groups added from /admin.

@@ -15,15 +15,13 @@
 
 /* Group rows become cards: the wrapper carries the surface so the slug editor or update button sits inside it. */
 .index .list { gap: 12px; border-top: 0; }
-.index .row-wrap, .index .admin-group { border: 1px solid var(--line); border-radius: 20px; background: var(--surface); overflow: hidden; }
-.index .row-wrap a.page, .index .admin-group a.page { padding: 18px 20px; border: 0; }
+.index .row-wrap { border: 1px solid var(--line); border-radius: 20px; background: var(--surface); overflow: hidden; }
+.index .row-wrap a.page { padding: 18px 20px; border: 0; }
 .index a.page:hover { background: color-mix(in srgb, var(--c) 7%, transparent); }
 .index .swatch { border-radius: 50%; }
 .index .name { font-family: var(--font-display); font-weight: 800; font-size: 20px; letter-spacing: -.015em; }
 .index .meta { font-family: var(--font-body); font-size: 13px; }
 .index .go { font-family: var(--font-body); font-weight: 600; color: var(--c); }
-.index .slug-edit { padding: 0 20px 16px 50px; }
-.index .admin-group { padding-right: 16px; }
 
 /* Admin */
 .update { gap: 12px; padding: 24px; border-radius: 20px; }
@@ -69,6 +67,7 @@
 .grp-panel input { padding: 7px 10px; font-family: var(--font-mono); font-size: 13px; }
 .grp-panel form button { min-height: 36px; padding: 0 14px; border-radius: 999px; font-size: 13px; font-weight: 600; }
 .grp-panel .slug-msg { flex-basis: 100%; margin: 0; color: var(--muted); font-size: 13px; }
+.grp-panel-head b { font-size: 14px; }
 .grp-panel .slug-msg.error { color: var(--signal); }
 .grp-panel .group-remove { padding: 0; margin: 0; font-size: 14px; }
 .grp-panel .group-remove button { border-radius: 999px; min-height: 36px; padding: 0 14px; }
@@ -78,11 +77,9 @@
   .grp-actions { grid-column: 2; justify-content: flex-start; margin-left: -2px; }
   .grp-name { white-space: normal; }
   .grp-panel { margin: 0 14px 14px; }
+  .grp-menu { left: 0; right: auto; } /* ⋯ sits on the left of the row here, so open rightward */
 }
 
 @media (max-width: 640px) {
-  .index .row-wrap a.page, .index .admin-group a.page { padding: 16px; }
-  .index .slug-edit { padding: 0 16px 14px 46px; }
-  .index .admin-group { grid-template-columns: minmax(0, 1fr); padding: 0 0 14px; }
-  .index .admin-group .group-update { padding-left: 46px; }
+  .index .row-wrap a.page { padding: 16px; }
 }

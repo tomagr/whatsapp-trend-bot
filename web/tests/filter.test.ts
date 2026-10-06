@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { categoryCounts, fmtDate, groupByCategory, matches, recentlyMentioned, splitContact, topPicks } from "@/lib/filter";
+import { categoryCounts, fmtDate, fmtLong, groupByCategory, matches, recentlyMentioned, splitContact, topPicks } from "@/lib/filter";
 
 const v = (o: Record<string, unknown>) => ({ name: "", category: "", service: "", location: "", contact: "", recommendedBy: "", quote: "", mentions: 1, sentiment: "positive", type: null, dates: [] as string[], ...o });
 
@@ -58,4 +58,11 @@ test("recentlyMentioned orders by latest date and skips vendors without dates", 
     v({ name: "c", dates: ["2026-06-01"] }),
   ], 2, "es");
   expect(out.map((x) => [x.name, x.lastDate])).toEqual([["b", "2026-09-10"], ["c", "2026-06-01"]]);
+});
+
+test("fmtLong drops the year only for dates in the given current year", () => {
+  expect(fmtLong("2026-10-06", "en-GB")).toBe("6 Oct 2026");
+  expect(fmtLong("2026-10-06", "en-GB", 2026)).toBe("6 Oct");
+  expect(fmtLong("2025-12-31", "en-GB", 2026)).toBe("31 Dec 2025");
+  expect(fmtLong(null, "en-GB", 2026)).toBe("");
 });

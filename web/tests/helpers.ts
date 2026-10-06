@@ -4,13 +4,14 @@ import { randomBytes } from "node:crypto";
 import { config } from "dotenv";
 import pg from "pg";
 import { makePrisma } from "@/lib/db";
+import { localDatabaseUrl } from "@/lib/localDb";
 import { pgConfig } from "@/lib/pgConfig";
 
 config({ path: path.join(import.meta.dirname, "..", "..", ".env"), quiet: true });
 
 // Each test file gets its own schema in trend_bot, migrated from scratch and dropped afterwards.
 export async function createTestDb() {
-  const base = new URL(process.env.DATABASE_URL!);
+  const base = new URL(process.env.DATABASE_URL || localDatabaseUrl());
   const schema = `test_${randomBytes(4).toString("hex")}`;
   base.searchParams.set("schema", schema);
   const url = base.toString();

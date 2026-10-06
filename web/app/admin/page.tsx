@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { currentUser } from "@/auth";
 import NavBar from "@/components/NavBar";
 import AdminGroupRow from "@/components/AdminGroupRow";
 import UpdatePanel from "@/components/UpdatePanel";
@@ -9,11 +9,13 @@ import { groupPhotoUrl } from "@/lib/groupPhoto";
 import { copyFor } from "@/lib/groupCopy";
 import { chatsToOffer, orderedGroups } from "@/lib/groups";
 import { rowStyle } from "@/lib/groupStyle";
+import { authEnabled } from "@/lib/authMode";
+import { fmtLong } from "@/lib/filter";
 import { stripEmoji } from "@/lib/ogImage";
 import { activeRun, recentRuns } from "@/lib/updateRuns";
 import { isSuperadmin, listUsers } from "@/lib/users";
 import AddGroupPanel from "@/components/AddGroupPanel";
-import { GroupRestoreButton } from "@/components/GroupRemoveButton";
+import { GroupRestoreButton } from "@/components/GroupRemoval";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Admin · WhatsApp Trend Pages", robots: { index: false, follow: false } };
@@ -23,21 +25,20 @@ const fmt = (d: Date | string | null) => !d ? "—" : new Intl.DateTimeFormat("e
   timeZone: "America/Argentina/Buenos_Aires", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
 }).format(new Date(d));
 
-// "2026-10-06" -> "6 Oct"; the year only when it is not this year's.
-const shortDate = (d: string) => {
-  const [y, m, day] = d.split("-").map(Number);
-  return new Date(y, m - 1, day).toLocaleDateString("en-GB", { day: "numeric", month: "short", ...(y === new Date().getFullYear() ? {} : { year: "numeric" }) });
-};
+// The group dates are Buenos Aires calendar days, so "this year" is the year there, not the server's.
+const thisYear = () => Number(new Intl.DateTimeFormat("en", { timeZone: "America/Argentina/Buenos_Aires", year: "numeric" }).format(new Date()));
 
 export default async function Admin() {
-  const user = (await auth())?.user;
+  const user = await currentUser();
   if (!user) redirect("/login");
   const prisma = db();
-  const superadmin = await isSuperadmin(prisma, user.email);
+  // Open mode: everyone sees everything, but there are no sign-ins to list.
+  const open = !authEnabled();
+  const superadmin = open || await isSuperadmin(prisma, user.email);
   const [active, runs, users, groups, counts, offer, chatRun, removed] = await Promise.all([
     activeRun(prisma),
     superadmin ? recentRuns(prisma, 50) : [],
-    superadmin ? listUsers(prisma) : [],
+    superadmin && !open ? listUsers(prisma) : [],
     orderedGroups(prisma),
     prisma.vendor.groupBy({ by: ["groupKey"], where: { deletedAt: null }, _count: true }),
     chatsToOffer(prisma),
@@ -57,6 +58,7 @@ export default async function Admin() {
       {r.message && <span className="run-msg">{r.message}</span>}
     </li>
   );
+  const year = thisYear();
   const chatPending = !!chatRun && (chatRun.status === "queued" || chatRun.status === "running");
   return (
     <div className="g-root g-index index admin">
@@ -98,7 +100,7 @@ export default async function Admin() {
             {groups.map((g) => (
               <AdminGroupRow key={g.key} groupKey={g.key} slug={g.slug} name={groupName(g.key)} style={rowStyle(g)} custom={!!g.addedAt}
                 photoUrl={g.photoHash ? groupPhotoUrl(g.slug, g.photoHash)! : null} vendors={vendorCount.get(g.key) ?? 0}
-                checked={g.checkedAt ? shortDate(g.checkedAt) : null} latest={g.messagesThrough ? shortDate(g.messagesThrough) : null}
+                checked={fmtLong(g.checkedAt, "en-GB", year) || null} latest={fmtLong(g.messagesThrough, "en-GB", year) || null}
                 updateDisabled={!!active} />
             ))}
           </ul>
@@ -118,7 +120,7 @@ export default async function Admin() {
           )}
         </section>
 
-        {superadmin && (
+        {superadmin && !open && (
           <section>
             <h2>Users</h2>
             {!users.length ? <p className="muted">Nobody has signed in yet.</p> : (

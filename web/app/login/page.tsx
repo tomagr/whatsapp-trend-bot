@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth, signIn } from "@/auth";
+import { authEnabled } from "@/lib/authMode";
 import SignInButton from "./SignInButton";
 import "./login.css";
 
@@ -10,8 +11,8 @@ type Props = { searchParams: Promise<{ error?: string }> };
 
 export default async function Login({ searchParams }: Props) {
   const { error } = await searchParams;
-  // Signing in always lands on the home page.
-  if ((await auth())?.user) redirect("/");
+  // Signing in always lands on the home page; in open mode there is nothing to sign in to.
+  if (!authEnabled() || (await auth())?.user) redirect("/");
   const domain = process.env.AUTH_ALLOWED_EMAIL_DOMAIN?.replace(/^@/, "");
   const account = domain ? `@${domain}` : "an allowed";
   const errorText = !error ? ""

@@ -52,10 +52,11 @@ export function splitContact(c: string): ({ text: string } | { href: string; tex
 
 export const fmtDate = (d: string) => { const [y, m, dd] = String(d).split("-"); return dd && m ? `${dd}/${m}/${y}` : d; };
 
-export function fmtLong(d: string | null | undefined, locale: string) {
+// "2026-10-06" -> "6 Oct 2026"; with thisYear, dates in that year leave the year out ("6 Oct").
+export function fmtLong(d: string | null | undefined, locale: string, thisYear?: number) {
   if (!d) return "";
   const [y, mo, dd] = d.split("-").map(Number);
-  return new Date(y, mo - 1, dd).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" });
+  return new Date(y, mo - 1, dd).toLocaleDateString(locale, { day: "numeric", month: "short", ...(y === thisYear ? {} : { year: "numeric" }) });
 }
 
 export function fmtMonth(d: string, locale: string) {

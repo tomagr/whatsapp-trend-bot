@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { renameSlug, type SlugState } from "@/app/actions";
 
 // Renames a group's URL; the old one keeps redirecting. Shown in the /admin group row's "Edit URL" panel.
-export function SlugForm({ groupKey, slug, autoFocus }: { groupKey: string; slug: string; autoFocus?: boolean }) {
+export default function SlugForm({ groupKey, slug, autoFocus }: { groupKey: string; slug: string; autoFocus?: boolean }) {
   const [state, action, pending] = useActionState(renameSlug, { status: "idle", message: "", slug } satisfies SlugState);
   return (
     <form action={action}>
