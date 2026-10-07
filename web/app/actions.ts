@@ -77,7 +77,6 @@ export async function addGroupAction(_prev: AddGroupState, form: FormData): Prom
   const field = (k: string) => String(form.get(k) ?? "");
   const r = await addGroup(db(), {
     name: field("name"), lang: field("lang"), vendorMode: field("vendorMode"), context: field("context"),
-    scrubChildNames: form.get("scrubChildNames") === "on",
   }, user.email ?? "unknown");
   if (!r.ok) return { status: "error", message: r.error };
   revalidatePath("/", "layout");

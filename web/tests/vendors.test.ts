@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, expect, test } from "vitest";
 import { createTestDb } from "./helpers";
-import { createManualVendor, deleteManualVendor } from "@/lib/vendors";
+import { createManualVendor, deleteManualVendor, forVisitor } from "@/lib/vendors";
 
 let t: Awaited<ReturnType<typeof createTestDb>>;
 beforeAll(async () => {
@@ -62,4 +62,10 @@ test("refuses a non-string id (a Prisma filter would match every manual vendor)"
   await createManualVendor(t.prisma, { ...ok, name: "Otro" });
   expect(await deleteManualVendor(t.prisma, { not: "" } as unknown as string)).toBe(false);
   expect(await t.prisma.vendor.count({ where: { deletedAt: { not: null } } })).toBe(0);
+});
+
+test("a logged-out visitor sees neither who recommended a vendor nor what they said", () => {
+  const v = { id: "1", name: "Gomería Sur", recommendedBy: "Mamá de Juan", quote: "Juan quedó feliz", service: "Cubiertas" };
+  expect(forVisitor(v)).toEqual({ ...v, recommendedBy: "", quote: "" });
+  expect(v.quote).toBe("Juan quedó feliz"); // the original is untouched
 });

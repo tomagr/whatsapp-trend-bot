@@ -1,6 +1,12 @@
 import type { PrismaClient } from "./generated/prisma/client";
 import { vendorInput } from "./validation";
 
+// What a logged-out visitor may see of a vendor: no group member's name, so neither who recommended it nor what
+// they said (quotes can name people, children included). Applied server-side so nothing reaches their browser.
+export function forVisitor<V extends { recommendedBy: string; quote: string }>(v: V): V {
+  return { ...v, recommendedBy: "", quote: "" };
+}
+
 export async function createManualVendor(prisma: PrismaClient, raw: unknown) {
   const parsed = vendorInput.safeParse(raw);
   if (!parsed.success) {

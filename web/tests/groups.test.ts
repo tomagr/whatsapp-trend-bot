@@ -20,7 +20,7 @@ beforeEach(async () => {
 });
 
 const form = (over: Partial<NewGroup> = {}): NewGroup => ({
-  name: "🏕️ Campers del Sur!", lang: "es", context: "Gente que viaja en motorhome por la Patagonia", vendorMode: "sentiment", scrubChildNames: false, ...over,
+  name: "🏕️ Campers del Sur!", lang: "es", context: "Gente que viaja en motorhome por la Patagonia", vendorMode: "sentiment", ...over,
 });
 
 test("keys come from the WhatsApp name and never collide with keys, slugs or old slugs", async () => {
@@ -43,15 +43,6 @@ test("adding a group stores its config, picks a colour and queues its first run"
     key: "campers-del-sur", name: "🏕️ Campers del Sur!", lang: "es", vendor_mode: "sentiment",
     context: "Gente que viaja en motorhome por la Patagonia", privacy: { scrub_child_names: false }, added: true,
   }]);
-});
-
-test("a group whose chat mentions children scrubs their names and keeps its photo off the page", async () => {
-  const r = await addGroup(t.prisma, form({ name: "Padres 2B", scrubChildNames: true }), "a@x.co");
-  expect(r.ok && r.group.scrubChildNames).toBe(true);
-  expect((await addedGroupsConfig(t.prisma)).find((c) => c.name === "Padres 2B")?.privacy).toEqual({ scrub_child_names: true });
-  await removeGroup(t.prisma, r.ok ? r.group.key : "", "a@x.co");
-  const again = await addGroup(t.prisma, form({ name: "Padres 2B", scrubChildNames: false }), "a@x.co");
-  expect(again.ok && again.group.scrubChildNames).toBe(false); // re-adding takes the new answer
 });
 
 test("the same WhatsApp group cannot be added twice, and the form is checked", async () => {

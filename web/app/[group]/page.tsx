@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { copyFor } from "@/lib/groupCopy";
 import { resolveSlug } from "@/lib/slugs";
 import { SITE_NAME } from "@/lib/site";
+import { forVisitor } from "@/lib/vendors";
 
 export const dynamic = "force-dynamic";
 
@@ -54,8 +55,7 @@ export default async function GroupPage({ params }: Props) {
       mode={g.vendorMode === "type" ? "type" : "sentiment"}
       status={{ checkedAt: g.checkedAt, messagesThrough: g.messagesThrough }}
       photoUrl={groupPhotoUrl(g.slug, g.photoHash)}
-      // Who recommended a vendor is a group member's name: blank it server-side so it never reaches a logged-out browser.
-      vendors={user ? vendors : vendors.map((v) => ({ ...v, recommendedBy: "" }))}
+      vendors={user ? vendors : vendors.map(forVisitor)}
       opportunities={opportunities.map((o) => ({ ...o, quotes: (o.quotes as { date?: string; who?: string; text?: string }[]) ?? [] }))}
     />
   );

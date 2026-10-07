@@ -44,9 +44,9 @@ If something stops working, open the project in Claude Code and describe what yo
 
 - Your WhatsApp messages are read only on your Mac. The site keeps only the results: vendors, opportunities and short
   quotes, not the chats.
-- Phone and bank account numbers are removed from quotes (a vendor's own contact details stay), and so are
-  children's names in groups where you turn that on.
-- With the login on, people who aren't signed in see only the vendor lists, without who recommended whom.
+- Phone and bank account numbers are removed from quotes (a vendor's own contact details stay).
+- With the login on, people who aren't signed in see only the vendor lists: no quotes and no names of who
+  recommended whom.
 
 ## For developers
 
