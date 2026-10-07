@@ -27,7 +27,7 @@ REMOVED = STATE / "groups-removed.json"  # keys removed in /admin, built-in ones
 PRIVATE_NAMES = ROOT / "privacy.local.json"
 
 
-REQUIRED = ("key", "name", "lang", "vendor_mode", "context")
+REQUIRED = ("key", "name", "lang", "vendor_mode")
 
 
 def groups():
@@ -47,6 +47,10 @@ def groups():
     for c in cfgs:
         if extra.get(c["key"]):
             c.setdefault("privacy", {})["extra_names"] = extra[c["key"]]
+        # "What is the group about?" left empty in /admin: use what Claude inferred from the chat (pipeline.infer_context).
+        if not c.get("context"):
+            c["context"] = (load(STATE / c["key"] / "context.json", None) or {}).get("text", "")
+            c["context_inferred"] = bool(c["context"])
     # TRENDBOT_ONLY=key[,key] runs every step for those groups only (an "Update" on one group in /admin).
     only = {k.strip() for k in os.environ.get("TRENDBOT_ONLY", "").split(",") if k.strip()}
     if only:

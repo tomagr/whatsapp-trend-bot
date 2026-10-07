@@ -129,3 +129,9 @@ test("a generated description is stored, and a snapshot without one keeps it", a
   await syncGroup(t.prisma, snap({ group: { ...snap().group, description: null } }));
   expect((await t.prisma.group.findUnique({ where: { key: "overland" } }))!.description).toBe("Talleres y repuestos.");
 });
+
+test("an inferred context is stored, and a snapshot without one keeps it", async () => {
+  await syncGroup(t.prisma, snap({ group: { ...snap().group, context: "Overlanders converting trucks." } }));
+  await syncGroup(t.prisma, snap());
+  expect((await t.prisma.group.findUnique({ where: { key: "overland" } }))!.context).toBe("Overlanders converting trucks.");
+});

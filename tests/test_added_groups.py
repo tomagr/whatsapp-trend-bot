@@ -42,6 +42,15 @@ class AddedGroupsTest(unittest.TestCase):
         self.assertIn("ok", [c["key"] for c in self.store.groups()])
         self.assertNotIn("x", [c["key"] for c in self.store.groups()])
 
+    def test_context_is_optional_and_comes_from_what_claude_inferred(self):
+        self.write([{"key": "campers", "name": "Campers", "lang": "es", "vendor_mode": "sentiment"}])
+        cfg = next(c for c in self.store.groups() if c["key"] == "campers")
+        self.assertEqual((cfg["context"], cfg["context_inferred"]), ("", False))
+        (self.home / "state" / "campers").mkdir()
+        (self.home / "state" / "campers" / "context.json").write_text(json.dumps({"text": "Viajeros en motorhome"}))
+        cfg = next(c for c in self.store.groups() if c["key"] == "campers")
+        self.assertEqual((cfg["context"], cfg["context_inferred"]), ("Viajeros en motorhome", True))
+
     def test_only_can_pick_an_added_group(self):
         self.write([{"key": "campers", "name": "Campers", "lang": "es", "vendor_mode": "sentiment", "context": "c"}])
         os.environ["TRENDBOT_ONLY"] = "campers"

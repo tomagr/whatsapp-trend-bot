@@ -47,8 +47,14 @@ test("adding a group stores its config, picks a colour and queues its first run"
 
 test("the same WhatsApp group cannot be added twice, and the form is checked", async () => {
   expect((await addGroup(t.prisma, form({ name: "Argentina Overland Trucks" }), "a@x.co")).ok).toBe(false);
-  expect((await addGroup(t.prisma, form({ context: "short" }), "a@x.co")).ok).toBe(false);
+  expect((await addGroup(t.prisma, form({ context: "x".repeat(601) }), "a@x.co")).ok).toBe(false);
   expect((await addGroup(t.prisma, form({ lang: "fr" }), "a@x.co")).ok).toBe(false);
+});
+
+test("the description is optional: left empty, the pipeline gets an empty context and infers it", async () => {
+  const r = await addGroup(t.prisma, form({ context: "  " }), "a@x.co");
+  expect(r.ok && r.group.context).toBeNull();
+  expect((await addedGroupsConfig(t.prisma))[0].context).toBe("");
 });
 
 test("type-mode groups get the vendor types the model expects", async () => {

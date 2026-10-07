@@ -76,10 +76,10 @@ export default function AddGroupPanel({ offer, pending, failed }: Props) {
             <label><input type="radio" name="lang" value="en" /> English</label>
           </fieldset>
           <label className="field">
-            <span>What is the group about?</span>
-            <textarea name="context" required minLength={10} maxLength={600} rows={3}
+            <span>What is the group about? <em>(optional)</em></span>
+            <textarea name="context" maxLength={600} rows={3}
               placeholder="e.g. Parents of a 3rd grade class in Buenos Aires: birthdays, school supplies, after-school activities." />
-            <small>Given to the model that reads the chat, so it knows what counts as a vendor here.</small>
+            <small>Given to the model that reads the chat, so it knows what counts as a vendor here. Leave it empty and Claude works it out from the messages on the first update.</small>
           </label>
           <label className="field">
             <span>How are vendors mentioned?</span>

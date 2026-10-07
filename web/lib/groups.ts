@@ -38,7 +38,6 @@ export function newGroupError(g: NewGroup): string | null {
   if (!g.name.trim()) return "Pick a WhatsApp group.";
   if (g.lang !== "es" && g.lang !== "en") return "Choose a language.";
   if (g.vendorMode !== "sentiment" && g.vendorMode !== "type") return "Choose what kind of group it is.";
-  if (g.context.trim().length < 10) return "Describe what the group is about in a sentence.";
   if (g.context.length > 600) return "Keep the description short.";
   return null;
 }
@@ -51,7 +50,7 @@ export async function addGroup(prisma: PrismaClient, g: NewGroup, email: string,
   const existing = await prisma.group.findFirst({ where: { name: g.name }, omit: { photo: true } });
   if (existing && !existing.removedAt) return { ok: false as const, error: "That group is already on the platform." };
   const config = {
-    lang: g.lang, vendorMode: g.vendorMode, context: g.context.trim(),
+    lang: g.lang, vendorMode: g.vendorMode, context: g.context.trim() || null, // null: the pipeline infers it from the chat
     vendorTypes: g.vendorMode === "type" ? ["recommendation", "self-promotion"] : [],
   };
   let group;

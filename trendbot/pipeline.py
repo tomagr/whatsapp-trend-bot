@@ -148,6 +148,11 @@ def analyze(run=None, model_name="sonnet", timeout=900):
             continue
         out = run / cfg["key"]
         tail = (group_dir(cfg["key"]) / "tail.txt")
+        if not cfg["context"]:  # first run of a group added without a description: let Claude work it out
+            cfg["context"] = infer_context(cfg, out / "delta.txt", model_name=model_name)
+            data = load(out / "input.json", {})
+            data["context"] = cfg["context"]
+            save(out / "input.json", data)
         prompt = (template
                   .replace("{{INPUT_JSON}}", (out / "input.json").read_text(encoding="utf-8"))
                   .replace("{{CONTEXT_LINES}}", tail.read_text(encoding="utf-8") if tail.exists() else "(none)")
@@ -168,6 +173,30 @@ def analyze(run=None, model_name="sonnet", timeout=900):
             info.update(status="analysis-failed", error=str(e)[:500])
         save(run / "manifest.json", manifest)
     return manifest
+
+
+# ---- 2a. infer_context: what a group is about, when nobody wrote it in /admin ----
+
+CONTEXT_LINES = 150
+
+
+def infer_context(cfg, delta_path, model_name="sonnet"):
+    """Ask Claude what the group is about from a sample of its messages and keep it in state/<key>/context.json
+    (then store.groups() uses it and export() sends it to the site). On failure returns "" and the next run retries."""
+    try:
+        sample = "\n".join(Path(delta_path).read_text(encoding="utf-8").splitlines()[:CONTEXT_LINES])[:20000]
+        prompt = (f"Below are messages from the WhatsApp group \"{cfg['name']}\". In at most 50 words of English, say who "
+                  f"the members are and what the group is about, and the kinds of vendors, services or products people "
+                  f"recommend or look for there, so that another model can tell what counts as a vendor in this chat. "
+                  f"Do not name any person. Reply with the description only.\n\n{sample}")
+        text = " ".join(_ask_claude(prompt, model_name=model_name).split()).strip().strip('"')
+        if not 10 <= len(text) <= 600:
+            raise ValueError(f"unusable description ({len(text)} chars)")
+        save(group_dir(cfg["key"]) / "context.json", {"text": text, "at": _now()})
+        return text
+    except Exception as e:
+        print(f"infer_context {cfg['key']} failed: {e}")
+        return ""
 
 
 # ---- 2b. describe: one line for the page of each group added from /admin ----
@@ -290,6 +319,8 @@ def export():
         }
         if cfg.get("added"):  # written by describe(); missing until the group has vendors
             snap["group"]["description"] = (load(group_dir(cfg["key"]) / "description.json", None) or {}).get("text")
+            if cfg.get("context_inferred"):  # so /admin's config carries it from now on
+                snap["group"]["context"] = cfg["context"]
         save(group_dir(cfg["key"]) / "site.json", snap)
         out[cfg["key"]] = {"vendors": len(snap["vendors"]), "opportunities": len(snap["opportunities"])}
     return out
