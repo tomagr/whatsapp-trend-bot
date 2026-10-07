@@ -35,6 +35,10 @@ class InferContextTest(unittest.TestCase):
         self.calls.append(prompt)
         return ' "Argentine motorhome travellers sharing workshops, campsites and gear." '
 
+    def test_phone_numbers_in_the_answer_are_removed(self):
+        with mock.patch.object(self.pipeline, "_ask_claude", return_value="Travellers who call +54 9 11 5555-1234 for towing."):
+            self.assertEqual(self.pipeline.infer_context(self.pipeline.groups()[0], self.run / "delta.txt"), "Travellers who call [tel] for towing.")
+
     def test_infers_saves_and_feeds_the_analysis(self):
         fake_run = mock.Mock(return_value=mock.Mock(returncode=0, stdout=json.dumps({"result": '{"vendors": [], "signals": [], "new_opportunities": []}'})))
         with mock.patch.object(self.pipeline, "_ask_claude", self.fake_claude), mock.patch.object(self.pipeline.subprocess, "run", fake_run):

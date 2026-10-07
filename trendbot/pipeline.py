@@ -189,7 +189,8 @@ def infer_context(cfg, delta_path, model_name="sonnet"):
                   f"the members are and what the group is about, and the kinds of vendors, services or products people "
                   f"recommend or look for there, so that another model can tell what counts as a vendor in this chat. "
                   f"Do not name any person. Reply with the description only.\n\n{sample}")
-        text = " ".join(_ask_claude(prompt, model_name=model_name).split()).strip().strip('"')
+        # Same scrub as quotes: no phone or account numbers, however the model answered.
+        text = model.Scrubber(cfg.get("privacy", {}), [])(" ".join(_ask_claude(prompt, model_name=model_name).split()).strip().strip('"'))
         if not 10 <= len(text) <= 600:
             raise ValueError(f"unusable description ({len(text)} chars)")
         save(group_dir(cfg["key"]) / "context.json", {"text": text, "at": _now()})
